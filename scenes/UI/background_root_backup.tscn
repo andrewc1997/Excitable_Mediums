@@ -1,0 +1,242 @@
+[gd_scene load_steps=22 format=3 uid="uid://u3uddvfepnvd"]
+
+[ext_resource type="Shader" path="res://shader/backgroundshader.gdshader" id="1_v7p2e"]
+[ext_resource type="Script" path="res://scripts/ui/PCB_Pulse_Manager.gd" id="2_dtn7v"]
+[ext_resource type="PackedScene" uid="uid://cyxvldxh6im11" path="res://scenes/UI/pcb_circuit.tscn" id="3_w3v67"]
+[ext_resource type="PackedScene" uid="uid://bltrmgi2j0bau" path="res://scenes/UI/pcb_circuit_backup.tscn" id="4_hg6jx"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_3nuss"]
+shader = ExtResource("1_v7p2e")
+shader_parameter/center_color = Color(0.977937, 0.977937, 0.977937, 1)
+shader_parameter/edge_color = Color(0.72, 0.85, 0.93, 1)
+shader_parameter/white_radius = 0.18
+shader_parameter/blue_radius = 0.72
+shader_parameter/blue_strength = 0.75
+shader_parameter/bubble_strength = 0.15
+shader_parameter/glass_highlight = 0.025
+shader_parameter/rim_strength = 0.02
+shader_parameter/breathe_speed = 0.12
+shader_parameter/breathe_amount = 0.025
+shader_parameter/drift_speed = 0.15
+shader_parameter/drift_amount = 0.006
+
+[sub_resource type="Curve2D" id="Curve2D_gp8pa"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, -24, 104, 0, 0, 0, 0, 112, 104, 0, 0, 0, 0, 112, 136)
+}
+point_count = 3
+
+[sub_resource type="Curve2D" id="Curve2D_dtq4r"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, -24, 104, 0, 0, 0, 0, 112, 104)
+}
+point_count = 2
+
+[sub_resource type="Curve2D" id="Curve2D_wsxch"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, -24, 104, 0, 0, 0, 0, 66, 104, 0, 0, 0, 0, 112, 104)
+}
+point_count = 3
+
+[sub_resource type="Curve2D" id="Curve2D_eifbd"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, 78, 104, 0, 0, 0, 0, 114, 104, 0, 0, 0, 0, 114, 440)
+}
+point_count = 3
+
+[sub_resource type="Curve2D" id="Curve2D_pcrkd"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, -24, 104, 0, 0, 0, 0, 112, 104)
+}
+point_count = 2
+
+[sub_resource type="Curve2D" id="Curve2D_x8dsh"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, -24, 104, 0, 0, 0, 0, 112, 104)
+}
+point_count = 2
+
+[sub_resource type="Curve2D" id="Curve2D_chjva"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, -24, 104, 0, 0, 0, 0, 112, 104)
+}
+point_count = 2
+
+[sub_resource type="Curve2D" id="Curve2D_ahjvx"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, -24, 104, 0, 0, 0, 0, 112, 104)
+}
+point_count = 2
+
+[sub_resource type="Curve2D" id="Curve2D_lqdk4"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, -24, 104, 0, 0, 0, 0, 110, 104, 0, 0, 0, 0, 110, 128)
+}
+point_count = 3
+
+[sub_resource type="Curve2D" id="Curve2D_blstp"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, -24, 104, 0, 0, 0, 0, 110, 104, 0, 0, 0, 0, 110, 128, 0, 0, 0, 0, 134, 128, 0, 0, 0, 0, 134, 72, 0, 0, 0, 0, 86, 72)
+}
+point_count = 6
+
+[sub_resource type="Curve2D" id="Curve2D_hnvxa"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, -24, 104, 0, 0, 0, 0, 56, 104, 0, 0, 0, 0, 56, 424, 0, 0, 0, 0, 24, 424)
+}
+point_count = 4
+
+[sub_resource type="Curve2D" id="Curve2D_7l2tk"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, -24, 104, 0, 0, 0, 0, 112, 104)
+}
+point_count = 2
+
+[sub_resource type="Curve2D" id="Curve2D_onfqq"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, -24, 104, 0, 0, 0, 0, 112, 104)
+}
+point_count = 2
+
+[sub_resource type="Curve2D" id="Curve2D_trldi"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, -24, 104, 0, 0, 0, 0, 112, 104)
+}
+point_count = 2
+
+[sub_resource type="Curve2D" id="Curve2D_220wo"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, -24, 104, 0, 0, 0, 0, 114, 106, 0, 0, 0, 0, 114, 82, 0, 0, 0, 0, 90, 82)
+}
+point_count = 4
+
+[sub_resource type="Curve2D" id="Curve2D_jg4g7"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, -25, 109, 0, 0, 0, 0, 175, 109)
+}
+point_count = 2
+
+[node name="BackgroundRoot" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="GradientBackground" type="ColorRect" parent="."]
+material = SubResource("ShaderMaterial_3nuss")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+color = Color(0.808031, 0.955766, 0.999144, 1)
+
+[node name="GridLayer" type="Node2D" parent="."]
+
+[node name="PCBLayer" type="Node2D" parent="."]
+
+[node name="PCB_PulseManager" type="Node" parent="PCBLayer"]
+script = ExtResource("2_dtn7v")
+
+[node name="PCB_Circuit" parent="PCBLayer" instance=ExtResource("3_w3v67")]
+
+[node name="PCB_Circuit3" parent="PCBLayer" instance=ExtResource("3_w3v67")]
+position = Vector2(-15, 15)
+curve = SubResource("Curve2D_gp8pa")
+
+[node name="PCB_Circuit4" parent="PCBLayer" instance=ExtResource("3_w3v67")]
+position = Vector2(-30, 30)
+curve = SubResource("Curve2D_dtq4r")
+
+[node name="PCB_Circuit2" parent="PCBLayer" instance=ExtResource("3_w3v67")]
+position = Vector2(1150, 600)
+rotation = -3.14159
+curve = SubResource("Curve2D_wsxch")
+
+[node name="PCB_Circuit5" parent="PCBLayer" instance=ExtResource("3_w3v67")]
+position = Vector2(-80, 730)
+rotation = -1.5708
+curve = SubResource("Curve2D_eifbd")
+enable_soft_edge = true
+
+[node name="PCB_Circuit6" parent="PCBLayer" instance=ExtResource("3_w3v67")]
+position = Vector2(1180, 580)
+rotation = -3.14159
+curve = SubResource("Curve2D_wsxch")
+
+[node name="PCB_Circuit7" parent="PCBLayer" instance=ExtResource("3_w3v67")]
+position = Vector2(1210, 560)
+rotation = -3.14159
+curve = SubResource("Curve2D_wsxch")
+
+[node name="PCB_Circuit8" parent="PCBLayer" instance=ExtResource("3_w3v67")]
+position = Vector2(1210, 481.126)
+rotation = -3.14159
+scale = Vector2(1, 0.241594)
+curve = SubResource("Curve2D_wsxch")
+
+[node name="PCB_Circuit9" parent="PCBLayer" instance=ExtResource("4_hg6jx")]
+position = Vector2(0, 300)
+
+[node name="PCB_Circuit10" parent="PCBLayer" instance=ExtResource("4_hg6jx")]
+position = Vector2(-30, 330)
+curve = SubResource("Curve2D_pcrkd")
+
+[node name="PCB_Circuit11" parent="PCBLayer" instance=ExtResource("4_hg6jx")]
+position = Vector2(-60, 360)
+curve = SubResource("Curve2D_x8dsh")
+
+[node name="PCB_Circuit12" parent="PCBLayer" instance=ExtResource("4_hg6jx")]
+position = Vector2(700, -50)
+rotation = 1.5708
+curve = SubResource("Curve2D_chjva")
+
+[node name="PCB_Circuit13" parent="PCBLayer" instance=ExtResource("4_hg6jx")]
+position = Vector2(730, -80)
+rotation = 1.5708
+curve = SubResource("Curve2D_ahjvx")
+
+[node name="PCB_Circuit14" parent="PCBLayer" instance=ExtResource("4_hg6jx")]
+position = Vector2(760, -30)
+rotation = 1.5708
+curve = SubResource("Curve2D_lqdk4")
+
+[node name="PCB_Circuit15" parent="PCBLayer" instance=ExtResource("4_hg6jx")]
+position = Vector2(1000, -30)
+rotation = 1.5708
+curve = SubResource("Curve2D_blstp")
+
+[node name="PCB_Circuit16" parent="PCBLayer" instance=ExtResource("4_hg6jx")]
+position = Vector2(1200, 0)
+rotation = 1.5708
+curve = SubResource("Curve2D_hnvxa")
+
+[node name="PCB_Circuit17" parent="PCBLayer" instance=ExtResource("4_hg6jx")]
+position = Vector2(200, -50)
+rotation = 1.5708
+curve = SubResource("Curve2D_7l2tk")
+
+[node name="PCB_Circuit18" parent="PCBLayer" instance=ExtResource("4_hg6jx")]
+position = Vector2(350, -75)
+rotation = 1.5708
+curve = SubResource("Curve2D_onfqq")
+
+[node name="PCB_Circuit19" parent="PCBLayer" instance=ExtResource("4_hg6jx")]
+position = Vector2(380, -75)
+rotation = 1.5708
+curve = SubResource("Curve2D_trldi")
+
+[node name="PCB_Circuit20" parent="PCBLayer" instance=ExtResource("4_hg6jx")]
+position = Vector2(410, -50)
+rotation = 1.5708
+curve = SubResource("Curve2D_220wo")
+
+[node name="PCB_Circuit21" parent="PCBLayer" instance=ExtResource("4_hg6jx")]
+position = Vector2(125, 25)
+rotation = 1.5708
+curve = SubResource("Curve2D_jg4g7")

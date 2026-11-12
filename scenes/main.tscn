@@ -1,0 +1,77 @@
+[gd_scene load_steps=4 format=3 uid="uid://byg5nqjv20h28"]
+
+[ext_resource type="Script" path="res://scripts/main.gd" id="1_0e05o"]
+[ext_resource type="Script" path="res://scripts/graph.gd" id="2_bdro8"]
+[ext_resource type="Script" path="res://scripts/simulation_manager.gd" id="3_hpf4l"]
+
+[node name="Main" type="Node2D"]
+script = ExtResource("1_0e05o")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+anchor_mode = 0
+
+[node name="Graph" type="Node2D" parent="."]
+script = ExtResource("2_bdro8")
+
+[node name="Edges" type="Node2D" parent="Graph"]
+
+[node name="Nodes" type="Node2D" parent="Graph"]
+
+[node name="SimulationManager" type="Node" parent="."]
+script = ExtResource("3_hpf4l")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="UI" type="Control" parent="CanvasLayer"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="TitleLabel" type="Label" parent="CanvasLayer/UI"]
+layout_mode = 1
+anchors_preset = -1
+offset_left = 20.0
+offset_top = 15.0
+offset_right = 182.0
+offset_bottom = 38.0
+theme_override_font_sizes/font_size = 28
+text = "EXCITABLE MEDIUMS"
+
+[node name="StatusLabel" type="Label" parent="CanvasLayer/UI"]
+layout_mode = 0
+offset_left = 20.0
+offset_top = 55.0
+offset_right = 720.0
+offset_bottom = 78.0
+text = "Click Node to Begin
+"
+
+[node name="TickLabel" type="Label" parent="CanvasLayer/UI"]
+layout_mode = 0
+offset_left = 20.0
+offset_top = 85.0
+offset_right = 73.0
+offset_bottom = 108.0
+text = "Tick : 0"
+
+[node name="ResetButton" type="Button" parent="CanvasLayer/UI"]
+custom_minimum_size = Vector2(100, 38)
+layout_mode = 0
+offset_left = 20.0
+offset_top = 590.0
+offset_right = 71.0
+offset_bottom = 621.0
+text = "Reset"
+
+[node name="ReplayButton" type="Button" parent="CanvasLayer/UI"]
+custom_minimum_size = Vector2(100, 38)
+layout_mode = 0
+offset_left = 135.0
+offset_top = 590.0
+offset_right = 195.0
+offset_bottom = 621.0
+text = "Replay"
