@@ -1,7 +1,8 @@
-[gd_scene load_steps=7 format=3 uid="uid://duiufnh2otd3p"]
+[gd_scene load_steps=8 format=3 uid="uid://duiufnh2otd3p"]
 
 [ext_resource type="Script" path="res://scripts/builder/builder_connections.gd" id="1_4rdsp"]
 [ext_resource type="Script" path="res://scripts/builder/builder.gd" id="1_8b6yg"]
+[ext_resource type="PackedScene" uid="uid://u3uddvfepnvd" path="res://scenes/UI/background_root_backup.tscn" id="2_ftdf2"]
 [ext_resource type="Script" path="res://scripts/grids/square_grid.gd" id="2_xqvey"]
 [ext_resource type="Script" path="res://scripts/builder/builder_level_tools.gd" id="4_tmi5p"]
 [ext_resource type="Script" path="res://scripts/builder/builder_ui.gd" id="5_gpj0e"]
@@ -10,8 +11,19 @@
 [node name="Builder" type="Node2D"]
 script = ExtResource("1_8b6yg")
 
+[node name="BackgroundLayer" type="CanvasLayer" parent="."]
+layer = -1
+
+[node name="BackgroundRoot" parent="BackgroundLayer" instance=ExtResource("2_ftdf2")]
+
 [node name="Grid" type="Node2D" parent="."]
 script = ExtResource("2_xqvey")
+grid_type = 1
+rhombus_half_width = null
+rhombus_half_height = null
+grid_color = Color(0.203922, 0.266667, 0.337255, 0.784314)
+axis_color = Color(0.376471, 0.470588, 0.54902, 0.658824)
+line_width = 0.5
 
 [node name="Connections" type="Node2D" parent="."]
 script = ExtResource("1_4rdsp")
@@ -22,31 +34,6 @@ script = ExtResource("1_4rdsp")
 position = Vector2(576, 324)
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
-
-[node name="UI" type="Control" parent="CanvasLayer"]
-layout_mode = 3
-anchors_preset = 0
-mouse_filter = 2
-
-[node name="TitleLabel" type="Label" parent="CanvasLayer/UI"]
-layout_mode = 0
-offset_right = 253.0
-offset_bottom = 30.84
-text = "EXCITABLE MEDIUMS — BUILDER"
-
-[node name="ToolLabel" type="Label" parent="CanvasLayer/UI"]
-layout_mode = 0
-offset_top = 24.0
-offset_right = 100.0
-offset_bottom = 47.0
-text = "Tool: Normal"
-
-[node name="HelpLabel" type="Label" parent="CanvasLayer/UI"]
-layout_mode = 0
-offset_top = 48.0
-offset_right = 356.0
-offset_bottom = 71.0
-text = "1 Normal | 2 Splitter | 3 Alternating | 4 Target"
 
 [node name="LevelTools" type="Node" parent="."]
 script = ExtResource("4_tmi5p")

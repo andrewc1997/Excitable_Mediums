@@ -18,7 +18,7 @@ extends Path2D
 
 @export_category("Automatic Firing")
 
-@export var auto_fire: bool = true
+@export var auto_fire: bool = false
 @export var min_delay: float = 3.0
 @export var max_delay: float = 6.0
 

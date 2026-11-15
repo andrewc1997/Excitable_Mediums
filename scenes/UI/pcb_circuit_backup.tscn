@@ -11,6 +11,9 @@ point_count = 2
 [node name="PCB_Circuit" type="Path2D"]
 curve = SubResource("Curve2D_gmqnm")
 script = ExtResource("1_vjd1u")
+min_speed = 60.0
+max_speed = 180.0
+sample_spacing = 9.0
 terminus_scale = 2.0
 
 [node name="PathFollow2D" type="PathFollow2D" parent="."]

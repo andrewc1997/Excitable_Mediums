@@ -1,11 +1,23 @@
 
 extends Node2D
 
-# Excitable Mediums EM6 playtest, Godot 4.3.
-# Includes timeline, snapshots, pause, step controls and speed.
-# Preserves Bounce, Repeater, Delay, One-Way Gate and pulse trails.
+# ============================================================
+# EXCITABLE MEDIUMS - EM9 PLAYTEST
+# Godot 4.3
+#
+# - Begin-only launching
+# - Configurable N-input / M-output splitters
+# - Node failures do not stop other branches
+# - Final result after all activity resolves
+# - Delay and Repeater scheduling
+# - Bounce along exact incoming route
+# - One-Way Gate
+# - Timeline, stepping, pause, playback speed
+# - Rounded-path pulse animation and trails
+# ============================================================
 
 @export_category("Simulation Speed")
+
 @export_range(0.08, 0.80, 0.01)
 var tick_seconds: float = 0.22
 
@@ -17,7 +29,8 @@ const SECOND_PULSE_COLOR: Color = Color("#b4efff")
 const TARGET_REACHED_COLOR: Color = Color("#49db86")
 const REFRACTORY_COLOR: Color = Color("#9763c7")
 
-@export_category("Overlapping Signal Animation")
+@export_category("Overlapping Signals")
+
 @export_range(0.0, 30.0, 0.5)
 var wave_amplitude: float = 11.0
 
@@ -34,6 +47,7 @@ var size_variation: float = 3.0
 var base_pulse_radius: float = 7.0
 
 @export_category("Signal Trails")
+
 @export_range(0.0, 1.5, 0.05)
 var trail_length_cells: float = 0.65
 
@@ -44,7 +58,7 @@ var trail_samples: int = 7
 var trail_opacity: float = 0.55
 
 # ============================================================
-# REFERENCES
+# REFERENCES AND STATE
 # ============================================================
 
 var builder: Node2D
@@ -55,26 +69,24 @@ var connection_layer: BuilderConnections
 
 var gate_rules: PulseGateRules = PulseGateRules.new()
 
-# ============================================================
-# SIMULATION
-# ============================================================
-
 var test_mode: bool = false
 var running: bool = false
 var finished: bool = false
+var paused: bool = false
 
 var current_tick: int = 0
 var tick_accumulator: float = 0.0
+var playback_speed: float = 1.0
 
 var selected_start_id: String = ""
 var failure_reason: String = ""
+
+var node_failures: Array[String] = []
 
 var pulses: Array[Dictionary] = []
 var links: Array[Dictionary] = []
 var node_states: Dictionary = {}
 var delayed_pulses: Array[Dictionary] = []
-
-# {"uid", "next_tick", "interval", "remaining"}
 var repeater_jobs: Array[Dictionary] = []
 
 var targets_total: int = 0
@@ -91,17 +103,6 @@ var tick_label: Label
 var replay_button: Button
 var exit_button: Button
 
-var previous_ui_visibility: Dictionary = {}
-
-# ============================================================
-# EM6 TIMELINE
-# ============================================================
-
-var paused: bool = false
-
-var timeline: Array[Dictionary] = []
-var timeline_cursor: int = -1
-
 var pause_button: Button
 var step_back_button: Button
 var step_forward_button: Button
@@ -109,7 +110,10 @@ var speed_selector: OptionButton
 var timeline_slider: HSlider
 var timeline_label: Label
 
-var playback_speed: float = 1.0
+var previous_ui_visibility: Dictionary = {}
+
+var timeline: Array[Dictionary] = []
+var timeline_cursor: int = -1
 var updating_timeline_ui: bool = false
 
 # ============================================================
@@ -129,19 +133,26 @@ func _setup_test_ui() -> void:
 	level_tools = builder.get_node("LevelTools")
 
 	connection_layer = (
-		builder.get_node("Connections") as BuilderConnections
+		builder.get_node("Connections")
+		as BuilderConnections
 	)
 
 	var toolbar := (
-		ui_layer.get_node_or_null("LevelToolbar") as PanelContainer
+		ui_layer.get_node_or_null("LevelToolbar")
+		as PanelContainer
 	)
 
 	if toolbar == null:
-		push_error("TestLevel: LevelToolbar not found")
+		push_error("TestLevel: LevelToolbar not found.")
 		return
 
-	var toolbar_column := toolbar.get_child(0) as VBoxContainer
-	var toolbar_row := toolbar_column.get_child(0) as HBoxContainer
+	var toolbar_column := (
+		toolbar.get_child(0) as VBoxContainer
+	)
+
+	var toolbar_row := (
+		toolbar_column.get_child(0) as HBoxContainer
+	)
 
 	test_button = Button.new()
 	test_button.text = "▶ Test Level"
@@ -150,9 +161,13 @@ func _setup_test_ui() -> void:
 
 	test_bar = PanelContainer.new()
 	test_bar.name = "TestLevelBar"
+
 	ui_layer.add_child(test_bar)
 
-	test_bar.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	test_bar.set_anchors_preset(
+		Control.PRESET_TOP_WIDE
+	)
+
 	test_bar.offset_left = 12.0
 	test_bar.offset_right = -12.0
 	test_bar.offset_top = 10.0
@@ -170,7 +185,9 @@ func _setup_test_ui() -> void:
 	row.add_child(heading)
 
 	status_label = Label.new()
-	status_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	status_label.size_flags_horizontal = (
+		Control.SIZE_EXPAND_FILL
+	)
 	row.add_child(status_label)
 
 	tick_label = Label.new()
@@ -189,12 +206,11 @@ func _setup_test_ui() -> void:
 
 	var instructions := Label.new()
 	instructions.text = (
-		"Click a start node | Space: Pause | "
+		"Click Begin | Space: Pause | "
 		+ "Left/Right: Step | Esc: Return"
 	)
 	column.add_child(instructions)
 
-	# EM6 controls
 	var controls := HBoxContainer.new()
 	controls.add_theme_constant_override("separation", 8)
 	column.add_child(controls)
@@ -216,19 +232,23 @@ func _setup_test_ui() -> void:
 
 	speed_selector = OptionButton.new()
 
-	for speed_label in ["0.5×", "1×", "2×", "4×"]:
-		speed_selector.add_item(speed_label)
+	for label in ["0.5×", "1×", "2×", "4×"]:
+		speed_selector.add_item(label)
 
 	speed_selector.select(1)
 	speed_selector.item_selected.connect(_on_speed_selected)
 	controls.add_child(speed_selector)
 
 	timeline_slider = HSlider.new()
-	timeline_slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	timeline_slider.size_flags_horizontal = (
+		Control.SIZE_EXPAND_FILL
+	)
 	timeline_slider.min_value = 0.0
 	timeline_slider.max_value = 1.0
 	timeline_slider.step = 1.0
-	timeline_slider.value_changed.connect(_on_timeline_changed)
+	timeline_slider.value_changed.connect(
+		_on_timeline_changed
+	)
 	controls.add_child(timeline_slider)
 
 	timeline_label = Label.new()
@@ -239,8 +259,9 @@ func _setup_test_ui() -> void:
 	_refresh_timeline_ui()
 	test_bar.hide()
 
+
 # ============================================================
-# ENTER / EXIT
+# TEST MODE
 # ============================================================
 
 func enter_test_mode() -> void:
@@ -248,10 +269,14 @@ func enter_test_mode() -> void:
 	if test_mode or test_bar == null:
 		return
 
-	if level_tools.overlay != null and level_tools.overlay.visible:
+	if (
+		level_tools.overlay != null
+		and level_tools.overlay.visible
+	):
 		return
 
 	builder.cancel_palette_drag()
+
 	builder.dragging_node_id = ""
 	builder.connection_start_id = ""
 	builder.is_panning = false
@@ -259,15 +284,25 @@ func enter_test_mode() -> void:
 
 	previous_ui_visibility.clear()
 
-	for name in ["LevelToolbar", "NodePalette", "NodeInspector", "UI"]:
+	for name in [
+		"LevelToolbar",
+		"NodePalette",
+		"NodeInspector",
+		"UI"
+	]:
 
-		var item := ui_layer.get_node_or_null(name) as Control
+		var item := (
+			ui_layer.get_node_or_null(name)
+			as Control
+		)
 
 		if item != null:
 			previous_ui_visibility[name] = item.visible
 			item.hide()
 
-	links = builder.connection_layer.connections.duplicate(true)
+	links = (
+		builder.connection_layer.connections.duplicate(true)
+	)
 
 	test_mode = true
 	visible = true
@@ -276,15 +311,14 @@ func enter_test_mode() -> void:
 	selected_start_id = ""
 	_reset_run_state()
 
-
 	if builder.nodes_by_id.is_empty():
 		_set_status("No nodes placed.")
 	elif _get_begin_node_id().is_empty():
-		_set_status("A puzzle requires exactly one Begin Node.")
+		_set_status("Place exactly one Begin Node.")
 	elif targets_total == 0:
 		_set_status("Add at least one Goal Target.")
 	else:
-		_set_status("Click the green Begin Node to launch.")
+		_set_status("Click the Begin Node to launch.")
 
 
 func exit_test_mode() -> void:
@@ -295,6 +329,7 @@ func exit_test_mode() -> void:
 	_reset_run_state()
 
 	for uid in builder.nodes_by_id.keys():
+
 		var node: PuzzleNode = builder.nodes_by_id[uid]
 
 		if is_instance_valid(node):
@@ -307,17 +342,21 @@ func exit_test_mode() -> void:
 	for name in previous_ui_visibility.keys():
 
 		var item := (
-			ui_layer.get_node_or_null(str(name)) as Control
+			ui_layer.get_node_or_null(str(name))
+			as Control
 		)
 
 		if item != null:
-			item.visible = bool(previous_ui_visibility[name])
+			item.visible = bool(
+				previous_ui_visibility[name]
+			)
 
 	previous_ui_visibility.clear()
 	builder.update_tool_label()
 
+
 # ============================================================
-# REGISTER GATES
+# GATE SETUP
 # ============================================================
 
 func _register_gate_nodes() -> void:
@@ -396,22 +435,27 @@ func _sync_gate_visuals() -> void:
 		var node: PuzzleNode = builder.nodes_by_id[uid]
 
 		if node.kind != PuzzleNode.Kind.TRIGGER_TARGET:
-			node.set_blocker_open(gate_rules.is_open(uid))
+			node.set_blocker_open(
+				gate_rules.is_open(uid)
+			)
+
 
 # ============================================================
-# RESET AND REPLAY
+# RESET
 # ============================================================
 
 func _reset_run_state() -> void:
 
 	running = false
 	finished = false
+	paused = false
+
 	failure_reason = ""
+	node_failures.clear()
 
 	current_tick = 0
 	tick_accumulator = 0.0
 
-	paused = false
 	timeline.clear()
 	timeline_cursor = -1
 
@@ -438,6 +482,7 @@ func _reset_run_state() -> void:
 				"last_tick": -1000000,
 				"reached": false,
 				"cursor": 0,
+				"incoming_heading": Vector2.ZERO,
 				"broken": false
 			}
 
@@ -460,6 +505,7 @@ func _replay() -> void:
 		return
 
 	var start_id: String = selected_start_id
+
 	_reset_run_state()
 
 	if (
@@ -469,7 +515,8 @@ func _replay() -> void:
 	):
 		_start_from(start_id)
 	else:
-		_set_status("Choose a starting node.")
+		_set_status("Click the Begin Node.")
+
 
 # ============================================================
 # INPUT
@@ -482,43 +529,50 @@ func _input(event: InputEvent) -> void:
 
 	if event is InputEventKey:
 
-		if event.pressed and not event.echo:
+		if not event.pressed or event.echo:
+			return
 
-			if event.keycode == KEY_ESCAPE:
+		match event.keycode:
+
+			KEY_ESCAPE:
 				exit_test_mode()
 				get_viewport().set_input_as_handled()
 
-			elif (
-				event.keycode == KEY_SPACE
-				and not selected_start_id.is_empty()
-			):
-				_toggle_pause()
-				get_viewport().set_input_as_handled()
+			KEY_SPACE:
+				if not selected_start_id.is_empty():
+					_toggle_pause()
+					get_viewport().set_input_as_handled()
 
-			elif event.keycode == KEY_LEFT and paused:
-				_step_back()
-				get_viewport().set_input_as_handled()
+			KEY_LEFT:
+				if paused:
+					_step_back()
+					get_viewport().set_input_as_handled()
 
-			elif event.keycode == KEY_RIGHT and paused:
-				_step_forward()
-				get_viewport().set_input_as_handled()
+			KEY_RIGHT:
+				if paused:
+					_step_forward()
+					get_viewport().set_input_as_handled()
 
 		return
 
 	if event is InputEventMouseButton:
 
-		if not event.pressed or event.button_index != MOUSE_BUTTON_LEFT:
-			return
-
 		if (
-			event.position.y < 145.0
-			or running
-			or targets_total == 0
+			not event.pressed
+			or event.button_index != MOUSE_BUTTON_LEFT
 		):
 			return
 
+		if event.position.y < 145.0:
+			return
+
+		if running or targets_total == 0:
+			return
+
 		var cell: Vector2i = grid.local_to_cell(
-			grid.to_local(get_global_mouse_position())
+			grid.to_local(
+				get_global_mouse_position()
+			)
 		)
 
 		if not grid.is_valid_cell(cell):
@@ -526,52 +580,69 @@ func _input(event: InputEvent) -> void:
 
 		var uid: String = builder.get_id_at_cell(cell)
 
-		if not uid.is_empty():
+		if (
+			not uid.is_empty()
+			and uid == _get_begin_node_id()
+		):
 			_start_from(uid)
 			get_viewport().set_input_as_handled()
 
+
 # ============================================================
-# START
+# BEGIN NODE
 # ============================================================
+
+func _get_begin_node_id() -> String:
+
+	var start_id: String = ""
+
+	for key in builder.nodes_by_id.keys():
+
+		var uid: String = str(key)
+		var node: PuzzleNode = builder.nodes_by_id[uid]
+
+		if node.kind != PuzzleNode.Kind.BEGIN:
+			continue
+
+		if not start_id.is_empty():
+			return ""
+
+		start_id = uid
+
+	return start_id
 
 
 func _start_from(uid: String) -> void:
 
-	if not test_mode:
-		return
-
-	var begin_id: String = _get_begin_node_id()
-
-	if begin_id.is_empty() or uid != begin_id:
-		_set_status("Signals can only start from Begin.")
-		return
-
-	if not builder.nodes_by_id.has(uid):
-		return
-
-	if targets_total == 0:
-		_set_status("Add at least one Goal Target.")
+	if uid.is_empty() or uid != _get_begin_node_id():
+		_set_status("Only Begin can launch signals.")
 		return
 
 	_reset_run_state()
 	selected_start_id = uid
+
+	if targets_total == 0 or not node_states.has(uid):
+		return
+
 	running = true
 
-	# Begin receives one synthetic start event at tick 0.
-	_activate_arrivals(uid, [
-		{
-			"from": "",
-			"to": uid,
-			"path": [],
-			"returning": false
-		}
-	])
+	_activate_arrivals(uid, [{
+		"from": "",
+		"to": uid,
+		"path": [],
+		"returning": false
+	}])
 
 	if running:
 		_check_completion()
 
 	_save_snapshot()
 	queue_redraw()
+
+
+# ============================================================
+# PROCESS AND TICKS
+# ============================================================
 
 func _process(delta: float) -> void:
 
@@ -580,13 +651,16 @@ func _process(delta: float) -> void:
 
 	if running and not paused:
 
-		tick_accumulator += delta * playback_speed
+		tick_accumulator += (
+			delta * playback_speed
+		)
 
 		while (
 			running
 			and not paused
 			and tick_accumulator >= tick_seconds
 		):
+
 			tick_accumulator -= tick_seconds
 			_advance_tick()
 
@@ -628,6 +702,8 @@ func _advance_tick() -> void:
 
 	pulses = travelling
 
+	# All simultaneous arrivals are grouped
+	# before any nodes are processed.
 	var destinations: Array = arriving.keys()
 	destinations.sort()
 
@@ -636,7 +712,10 @@ func _advance_tick() -> void:
 		if not running:
 			break
 
-		_activate_arrivals(str(uid), arriving[uid])
+		_activate_arrivals(
+			str(uid),
+			arriving[uid]
+		)
 
 	if running:
 		_release_due_delays()
@@ -650,24 +729,31 @@ func _advance_tick() -> void:
 		_check_completion()
 
 	if running:
-		_set_status(
-			"Running | Goals %d/%d | Travelling %d | Held %d | Repeaters %d"
+		var message: String = (
+			"Running | Goals %d/%d | Pulses %d | Held %d | Repeaters %d | Issues %d"
 			% [
 				targets_reached,
 				targets_total,
 				pulses.size(),
 				_count_held_signals(),
-				repeater_jobs.size()
+				repeater_jobs.size(),
+				node_failures.size()
 			]
 		)
+		_set_status(message)
 
 	_save_snapshot()
+
 
 # ============================================================
 # NODE ACTIVATION
 # ============================================================
 
-func _activate_arrivals(uid: String, arrivals: Array) -> void:
+
+func _activate_arrivals(
+	uid: String,
+	arrivals: Array
+) -> void:
 
 	if (
 		not builder.nodes_by_id.has(uid)
@@ -684,24 +770,32 @@ func _activate_arrivals(uid: String, arrivals: Array) -> void:
 	var node: PuzzleNode = builder.nodes_by_id[uid]
 	var state: Dictionary = node_states[uid]
 
+	var arrival_heading: Vector2 = (
+		_get_incoming_heading(arrivals)
+	)
+
+	if arrival_heading.length_squared() > 0.001:
+		state["incoming_heading"] = arrival_heading
+
+	if bool(state.get("broken", false)):
+		return
+
 	# ====================================================
-	# BEGIN NODE
-	#
-	# Only the synthetic tick-zero event may activate it.
-	# Any pulse arriving later is absorbed.
+	# BEGIN
 	# ====================================================
 
 	if node.kind == PuzzleNode.Kind.BEGIN:
 
-		var is_initial_start: bool = (
-			current_tick == 0
-			and uid == selected_start_id
+		var initial: bool = (
+			uid == selected_start_id
+			and current_tick == 0
 			and count == 1
-			and str(arrivals[0].get("from", "")).is_empty()
+			and str(
+				arrivals[0].get("from", "")
+			).is_empty()
 		)
 
-		if not is_initial_start:
-			# Returning signals do not restart Begin.
+		if not initial:
 			return
 
 		state["activations"] = 1
@@ -709,41 +803,67 @@ func _activate_arrivals(uid: String, arrivals: Array) -> void:
 
 		node.set_test_display(true, 1, false)
 
-		var options: Array[Dictionary] = _outgoing_links(uid)
+		var exits: Array[Dictionary] = (
+			_outgoing_links(uid)
+		)
 
-		if options.is_empty():
-			_finish(
-				false,
-				"Begin Node has no outgoing connection."
+		if exits.is_empty():
+			_record_node_failure(
+				uid,
+				"Begin has no outgoing connection"
 			)
 			return
 
-		# Exactly one initial signal.
-		_dispatch_pulse(uid, options[0])
+		_dispatch_pulse(uid, exits[0])
 		return
 
-
+	# ====================================================
 	# DELAY
+	# ====================================================
+
 	if node.kind == PuzzleNode.Kind.DELAY:
-		_store_delayed_pulses(uid, node, state, count)
+
+		_store_delayed_pulses(
+			uid,
+			node,
+			state,
+			count
+		)
 		return
 
+	# ====================================================
 	# REPEATER
+	# ====================================================
+
 	if node.kind == PuzzleNode.Kind.REPEATER:
+
 		_start_repeater(uid, node, state)
 		return
 
+	# ====================================================
 	# ONE-WAY GATE
+	# ====================================================
+
 	if node.kind == PuzzleNode.Kind.ONE_WAY_GATE:
-		_activate_one_way_gate(uid, node, state, arrivals)
+
+		_activate_one_way_gate(
+			uid,
+			node,
+			state,
+			arrivals
+		)
 		return
 
+	# ====================================================
 	# BOUNCE
+	# ====================================================
+
 	if node.kind == PuzzleNode.Kind.BOUNCE:
 
 		state["activations"] = (
 			int(state["activations"]) + count
 		)
+
 		state["last_tick"] = current_tick
 
 		node.set_test_display(
@@ -761,7 +881,9 @@ func _activate_arrivals(uid: String, arrivals: Array) -> void:
 
 			if (
 				inbound_path.size() < 2
-				or str(arrival.get("from", "")).is_empty()
+				or str(
+					arrival.get("from", "")
+				).is_empty()
 			):
 				continue
 
@@ -779,7 +901,10 @@ func _activate_arrivals(uid: String, arrivals: Array) -> void:
 
 		return
 
+	# ====================================================
 	# GOAL TARGET
+	# ====================================================
+
 	if node.kind == PuzzleNode.Kind.TARGET:
 
 		var new_hits: int = (
@@ -788,11 +913,19 @@ func _activate_arrivals(uid: String, arrivals: Array) -> void:
 
 		if new_hits > node.activation_cap:
 
-			_mark_node_broken(uid)
-			_finish(
-				false,
-				"Goal Target %s overloaded: %d/%d hits."
-				% [uid, new_hits, node.activation_cap]
+			if bool(state["reached"]):
+
+				state["reached"] = false
+
+				targets_reached = maxi(
+					0,
+					targets_reached - 1
+				)
+
+			_record_node_failure(
+				uid,
+				"Goal Target overloaded: %d/%d hits"
+				% [new_hits, node.activation_cap]
 			)
 			return
 
@@ -803,40 +936,61 @@ func _activate_arrivals(uid: String, arrivals: Array) -> void:
 			new_hits == node.activation_cap
 			and not bool(state["reached"])
 		):
+
 			state["reached"] = true
 			targets_reached += 1
 
-		node.set_test_display(true, new_hits, false)
+		node.set_test_display(
+			true,
+			new_hits,
+			false
+		)
+
 		return
 
-	# BLOCKERS / GATES / TRIGGERS
+	# ====================================================
+	# BLOCKERS AND GATES
+	# ====================================================
+
 	if _is_gate_rule_node(node):
-		_activate_gate_rule_node(uid, node, state, count)
-		return
 
-	# SPLITTER
-	if (
-		node.kind == PuzzleNode.Kind.SPLITTER
-		and count != node.required_inputs
-	):
-
-		_mark_node_broken(uid)
-		_finish(
-			false,
-			"Splitter %s requires %d inputs, got %d."
-			% [uid, node.required_inputs, count]
+		_activate_gate_rule_node(
+			uid,
+			node,
+			state,
+			count
 		)
 		return
 
-	# ACTIVATION LIMITS
+	# ====================================================
+	# SPLITTER INPUT REQUIREMENTS
+	# ====================================================
+
+	if node.kind == PuzzleNode.Kind.SPLITTER:
+
+		if count != node.required_inputs:
+
+			_record_node_failure(
+				uid,
+				"Splitter requires %d inputs, received %d"
+				% [node.required_inputs, count]
+			)
+			return
+
+	# ====================================================
+	# ACTIVATION CAP AND REFRACTORY
+	# ====================================================
+
 	if not node.has_unlimited_activations():
 
-		if int(state["activations"]) >= node.activation_cap:
+		if (
+			int(state["activations"])
+			>= node.activation_cap
+		):
 
-			_mark_node_broken(uid)
-			_finish(
-				false,
-				"Node %s exceeded its activation cap." % uid
+			_record_node_failure(
+				uid,
+				"Activation cap exceeded"
 			)
 			return
 
@@ -845,14 +999,21 @@ func _activate_arrivals(uid: String, arrivals: Array) -> void:
 			and current_tick - int(state["last_tick"])
 				<= node.refractory_ticks
 		):
-			_mark_node_broken(uid)
-			_finish(
-				false,
-				"Node %s is still refractory." % uid
+
+			_record_node_failure(
+				uid,
+				"Node still refractory"
 			)
 			return
 
-	state["activations"] = int(state["activations"]) + 1
+	# ====================================================
+	# ACTIVATE
+	# ====================================================
+
+	state["activations"] = (
+		int(state["activations"]) + 1
+	)
+
 	state["last_tick"] = current_tick
 
 	node.set_test_display(
@@ -861,7 +1022,29 @@ func _activate_arrivals(uid: String, arrivals: Array) -> void:
 		false
 	)
 
-	var options: Array[Dictionary] = _outgoing_links(uid)
+	# ====================================================
+	# SELECT OUTPUT OPTIONS
+	#
+	# Alternating nodes must have a fixed ordering.
+	# Ordinary nodes still favour continuing forward.
+	# ====================================================
+
+	var options: Array[Dictionary] = []
+
+	if node.kind == PuzzleNode.Kind.ALTERNATING:
+
+		options = _outgoing_links(uid)
+
+	else:
+
+		options = _prefer_forward_links(
+			uid,
+			arrival_heading
+		)
+
+	# ====================================================
+	# FILTER RETURNING BOUNCE SIGNALS
+	# ====================================================
 
 	if _all_returning_from_same_node(arrivals):
 
@@ -872,32 +1055,39 @@ func _activate_arrivals(uid: String, arrivals: Array) -> void:
 		var filtered: Array[Dictionary] = []
 
 		for option in options:
+
 			if str(option["to"]) != came_from:
 				filtered.append(option)
 
 		options = filtered
 
-	# Neutral dead end simply absorbs signal.
+	# ====================================================
+	# NO EXITS
+	# ====================================================
+
 	if options.is_empty():
 
 		if node.kind == PuzzleNode.Kind.NORMAL:
 			return
 
-		_finish(
-			false,
-			"Node %s has no outgoing connection." % uid
+		_record_node_failure(
+			uid,
+			"No outgoing connection"
 		)
 		return
+
+	# ====================================================
+	# SPLITTER
+	# ====================================================
 
 	if node.kind == PuzzleNode.Kind.SPLITTER:
 
 		if options.size() < node.output_count:
 
-			_finish(
-				false,
-				"Splitter %s needs %d exits, has %d."
+			_record_node_failure(
+				uid,
+				"Splitter needs %d exits, has %d"
 				% [
-					uid,
 					node.output_count,
 					options.size()
 				]
@@ -906,28 +1096,57 @@ func _activate_arrivals(uid: String, arrivals: Array) -> void:
 
 		for index in range(node.output_count):
 
-			_dispatch_pulse(uid, options[index])
+			_dispatch_pulse(
+				uid,
+				options[index]
+			)
 
 			if not running:
 				return
 
-	elif node.kind == PuzzleNode.Kind.ALTERNATING:
+		return
+
+	# ====================================================
+	# ALTERNATING
+	#
+	# One arriving pulse = one output.
+	#
+	# First arrival: exit 0
+	# Second arrival: exit 1
+	# Third arrival: exit 0
+	#
+	# Two simultaneous arrivals advance twice.
+	# ====================================================
+
+	if node.kind == PuzzleNode.Kind.ALTERNATING:
 
 		var cursor: int = int(state["cursor"])
 
-		_dispatch_pulse(
-			uid,
-			options[cursor % options.size()]
-		)
+		for arrival_index in range(count):
 
-		state["cursor"] = cursor + 1
+			var exit_index: int = (
+				cursor % options.size()
+			)
 
-	else:
-		_dispatch_pulse(uid, options[0])
+			_dispatch_pulse(
+				uid,
+				options[exit_index]
+			)
 
-# ============================================================
-# ONE-WAY GATE
-# ============================================================
+			if not running:
+				return
+
+			cursor += 1
+
+		state["cursor"] = cursor
+		return
+
+	# ====================================================
+	# NORMAL NODE
+	# ====================================================
+
+	_dispatch_pulse(uid, options[0])
+
 
 func _gate_direction_vector(direction: int) -> Vector2i:
 
@@ -968,16 +1187,17 @@ func _activate_one_way_gate(
 		if path.size() < 2:
 			continue
 
-		var difference: Vector2i = (
-			path[path.size() - 1] - path[path.size() - 2]
+		var delta: Vector2i = (
+			path[path.size() - 1]
+			- path[path.size() - 2]
 		)
 
-		var travel := Vector2i(
-			signi(difference.x),
-			signi(difference.y)
+		var direction := Vector2i(
+			signi(delta.x),
+			signi(delta.y)
 		)
 
-		if travel == forward:
+		if direction == forward:
 			accepted += 1
 
 	if accepted <= 0:
@@ -1002,16 +1222,14 @@ func _activate_one_way_gate(
 		if path.size() < 2:
 			continue
 
-		var difference: Vector2i = (
-			path[1] - path[0]
+		var delta: Vector2i = path[1] - path[0]
+
+		var direction := Vector2i(
+			signi(delta.x),
+			signi(delta.y)
 		)
 
-		var travel := Vector2i(
-			signi(difference.x),
-			signi(difference.y)
-		)
-
-		if travel != forward:
+		if direction != forward:
 			continue
 
 		for i in range(accepted):
@@ -1023,30 +1241,33 @@ func _activate_one_way_gate(
 
 		return
 
-	# No permitted forward exit: absorb safely.
+	# No forward exit means absorption.
 
 
-func _all_returning_from_same_node(arrivals: Array) -> bool:
+func _all_returning_from_same_node(
+	arrivals: Array
+) -> bool:
 
 	if arrivals.is_empty():
 		return false
 
-	var incoming_uid: String = str(
+	var source: String = str(
 		arrivals[0].get("from", "")
 	)
 
-	if incoming_uid.is_empty():
+	if source.is_empty():
 		return false
 
 	for item in arrivals:
 
 		if (
 			not bool(item.get("returning", false))
-			or str(item.get("from", "")) != incoming_uid
+			or str(item.get("from", "")) != source
 		):
 			return false
 
 	return true
+
 
 # ============================================================
 # REPEATER
@@ -1063,12 +1284,14 @@ func _start_repeater(
 	if _find_repeater_job(uid) >= 0:
 		return
 
-	var options: Array[Dictionary] = _outgoing_links(uid)
+	var heading: Vector2 = state.get("incoming_heading", Vector2.ZERO)
+	var options: Array[Dictionary] = _prefer_forward_links(uid, heading)
 
 	if options.is_empty():
-		_finish(
-			false,
-			"Repeater %s has no outgoing connection." % uid
+
+		_record_node_failure(
+			uid,
+			"Repeater has no outgoing connection"
 		)
 		return
 
@@ -1079,7 +1302,9 @@ func _start_repeater(
 		"next_tick": current_tick + node.repeat_interval
 	})
 
-	state["activations"] = int(state["activations"]) + 1
+	state["activations"] = (
+		int(state["activations"]) + 1
+	)
 
 	node.set_test_display(
 		true,
@@ -1087,7 +1312,10 @@ func _start_repeater(
 		false
 	)
 
-	node.set_repeater_display(true, node.repeat_count)
+	node.set_repeater_display(
+		true,
+		node.repeat_count
+	)
 
 
 func _find_repeater_job(uid: String) -> int:
@@ -1112,6 +1340,7 @@ func _run_repeaters() -> void:
 		var uid: String = str(job["uid"])
 
 		if not builder.nodes_by_id.has(uid):
+
 			_finish(false, "Repeater no longer exists.")
 			return
 
@@ -1119,15 +1348,17 @@ func _run_repeaters() -> void:
 
 		if int(job["next_tick"]) <= current_tick:
 
-			var options: Array[Dictionary] = _outgoing_links(uid)
+			var state: Dictionary = node_states[uid]
+			var heading: Vector2 = state.get("incoming_heading", Vector2.ZERO)
+			var options: Array[Dictionary] = _prefer_forward_links(uid, heading)
 
 			if options.is_empty():
 
-				_finish(
-					false,
-					"Repeater %s has no outgoing connection." % uid
+				_record_node_failure(
+					uid,
+					"Repeater has no outgoing connection"
 				)
-				return
+				continue
 
 			_dispatch_pulse(uid, options[0])
 
@@ -1136,7 +1367,9 @@ func _run_repeaters() -> void:
 
 			node.play_activation_animation()
 
-			job["remaining"] = int(job["remaining"]) - 1
+			job["remaining"] = (
+				int(job["remaining"]) - 1
+			)
 
 			job["next_tick"] = (
 				current_tick + int(job["interval"])
@@ -1156,8 +1389,9 @@ func _run_repeaters() -> void:
 
 	repeater_jobs = remaining_jobs
 
+
 # ============================================================
-# DELAY COLLECTOR
+# DELAY
 # ============================================================
 
 func _store_delayed_pulses(
@@ -1173,14 +1407,14 @@ func _store_delayed_pulses(
 		+ arrival_count
 		> MAX_ACTIVE_PULSES
 	):
-		_finish(false, "Too many signals in simulation.")
+		_finish(false, "Too many signals.")
 		return
 
 	var found: bool = false
 
-	for i in range(delayed_pulses.size()):
+	for index in range(delayed_pulses.size()):
 
-		var batch: Dictionary = delayed_pulses[i]
+		var batch: Dictionary = delayed_pulses[index]
 
 		if str(batch["uid"]) != uid:
 			continue
@@ -1189,7 +1423,8 @@ func _store_delayed_pulses(
 			int(batch["count"]) + arrival_count
 		)
 
-		delayed_pulses[i] = batch
+		delayed_pulses[index] = batch
+
 		found = true
 		break
 
@@ -1198,7 +1433,8 @@ func _store_delayed_pulses(
 		delayed_pulses.append({
 			"uid": uid,
 			"count": arrival_count,
-			"release_tick": current_tick + node.delay_ticks
+			"release_tick": current_tick
+				+ node.delay_ticks
 		})
 
 	state["activations"] = (
@@ -1238,8 +1474,10 @@ func _update_delay_charging() -> void:
 				continue
 
 			if (
-				int(batch["release_tick"]) - current_tick == 1
+				int(batch["release_tick"])
+				- current_tick == 1
 			):
+
 				progress = clampf(
 					tick_accumulator / tick_seconds,
 					0.0,
@@ -1273,23 +1511,27 @@ func _release_due_delays() -> void:
 		var uid: String = str(batch["uid"])
 
 		if not builder.nodes_by_id.has(uid):
+
 			_finish(false, "Delay Node no longer exists.")
 			return
 
 		var node: PuzzleNode = builder.nodes_by_id[uid]
-		var options: Array[Dictionary] = _outgoing_links(uid)
+
+		var state: Dictionary = node_states[uid]
+		var heading: Vector2 = state.get("incoming_heading", Vector2.ZERO)
+		var options: Array[Dictionary] = _prefer_forward_links(uid, heading)
 
 		if options.is_empty():
 
-			_finish(
-				false,
-				"Delay Node %s has no outgoing connection." % uid
+			_record_node_failure(
+				uid,
+				"Delay has no outgoing connection"
 			)
-			return
+			continue
 
 		node.play_delay_release_animation()
 
-		for i in range(int(batch["count"])):
+		for index in range(int(batch["count"])):
 
 			_dispatch_pulse(uid, options[0])
 
@@ -1329,15 +1571,22 @@ func _update_delay_visuals() -> void:
 				continue
 
 			held += int(batch["count"])
+
 			nearest = mini(
 				nearest,
 				int(batch["release_tick"])
 			)
 
+		var remaining_ticks: int = (
+			maxi(0, nearest - current_tick)
+			if held > 0 else 0
+		)
+
 		node.set_delay_display(
 			held,
-			maxi(0, nearest - current_tick) if held > 0 else 0
+			remaining_ticks
 		)
+
 
 # ============================================================
 # BLOCKERS / GATES / TRIGGERS
@@ -1356,23 +1605,25 @@ func _activate_gate_rule_node(
 			gate_rules.get_count(uid) + arrival_count
 			> node.activation_cap
 		):
-			_mark_node_broken(uid)
 
-			_finish(
-				false,
-				"Trigger Target %s received too many pulses." % uid
+			_record_node_failure(
+				uid,
+				"Trigger Target received too many pulses"
 			)
 			return
 
-	var result: Dictionary = gate_rules.process_arrivals(
-		uid,
-		arrival_count
+	var result: Dictionary = (
+		gate_rules.process_arrivals(
+			uid,
+			arrival_count
+		)
 	)
 
 	var passed: int = int(result["passed"])
 	var visual_count: int = gate_rules.get_count(uid)
 
 	if node.kind == PuzzleNode.Kind.BLOCKER_TARGET:
+
 		visual_count = (
 			int(state["activations"]) + arrival_count
 		)
@@ -1392,28 +1643,69 @@ func _activate_gate_rule_node(
 		)
 		return
 
-	node.set_test_display(true, visual_count, false)
-	node.set_blocker_open(gate_rules.is_open(uid))
+	node.set_test_display(
+		true,
+		visual_count,
+		false
+	)
+
+	node.set_blocker_open(
+		gate_rules.is_open(uid)
+	)
 
 	if passed <= 0:
 		return
 
-	var options: Array[Dictionary] = _outgoing_links(uid)
+	var heading: Vector2 = state.get("incoming_heading", Vector2.ZERO)
+	var options: Array[Dictionary] = _prefer_forward_links(uid, heading)
 
 	if options.is_empty():
 
-		_finish(
-			false,
-			"%s passed pulses but has no outgoing connection." % uid
+		_record_node_failure(
+			uid,
+			"Gate passed signals but has no exit"
 		)
 		return
 
-	for i in range(passed):
+	for index in range(passed):
 
 		_dispatch_pulse(uid, options[0])
 
 		if not running:
 			return
+
+
+# ============================================================
+# NONFATAL NODE FAILURE
+#
+# This is the key EM9 change:
+# one broken branch does not stop the simulation.
+# ============================================================
+
+func _record_node_failure(
+	uid: String,
+	detail: String
+) -> void:
+
+	if not node_states.has(uid):
+		return
+
+	if bool(node_states[uid].get("broken", false)):
+		return
+
+	_mark_node_broken(uid)
+
+	var message: String = (
+		"Tick %d - %s: %s"
+		% [current_tick, uid, detail]
+	)
+
+	node_failures.append(message)
+
+	_set_status(
+		"Issue: %s | Other signals still running"
+		% message
+	)
 
 
 func _mark_node_broken(uid: String) -> void:
@@ -1432,13 +1724,36 @@ func _mark_node_broken(uid: String) -> void:
 		true
 	)
 
+
 # ============================================================
-# CONNECTION ROUTING
+# OUTPUT CONNECTIONS
 # ============================================================
 
-func _outgoing_links(uid: String) -> Array[Dictionary]:
+
+
+# ============================================================
+# OUTPUT CONNECTIONS
+#
+# Normal nodes:
+#   Keep a consistent connection ordering.
+#
+# Alternating nodes:
+#   Prefer the turning branch first.
+#   Keep the same ordering for later arrivals.
+#
+# The actual alternating sequence is controlled
+# by state["cursor"] in _activate_arrivals().
+# ============================================================
+
+func _outgoing_links(
+	uid: String
+) -> Array[Dictionary]:
 
 	var choices: Array[Dictionary] = []
+
+	# ====================================================
+	# COLLECT OUTGOING CONNECTIONS
+	# ====================================================
 
 	for connection in links:
 
@@ -1458,22 +1773,217 @@ func _outgoing_links(uid: String) -> Array[Dictionary]:
 			"path": path
 		})
 
+	# ====================================================
+	# CHECK FOR ALTERNATING NODE
+	# ====================================================
+
+	var is_alternating: bool = false
+
+	if builder.nodes_by_id.has(uid):
+
+		var node: PuzzleNode = builder.nodes_by_id[uid]
+
+		is_alternating = (
+			node.kind == PuzzleNode.Kind.ALTERNATING
+		)
+
+	# ====================================================
+	# ALTERNATING: TURN-FIRST ORDERING
+	# ====================================================
+
+	if is_alternating and node_states.has(uid):
+
+		var state: Dictionary = node_states[uid]
+
+		# Remember the direction of the first signal.
+		if not state.has("alternating_reference_heading"):
+
+			state["alternating_reference_heading"] = (
+				state.get(
+					"incoming_heading",
+					Vector2.ZERO
+				)
+			)
+
+		var heading: Vector2 = state.get(
+			"alternating_reference_heading",
+			Vector2.ZERO
+		)
+
+		if heading.length_squared() > 0.001:
+
+			choices.sort_custom(
+				func(a: Dictionary, b: Dictionary) -> bool:
+
+					var a_path: Array = a["path"]
+					var b_path: Array = b["path"]
+
+					var a_exit: Vector2 = (
+						grid.cell_to_local(a_path[1])
+						- grid.cell_to_local(a_path[0])
+					).normalized()
+
+					var b_exit: Vector2 = (
+						grid.cell_to_local(b_path[1])
+						- grid.cell_to_local(b_path[0])
+					).normalized()
+
+					var a_score: float = (
+						heading.dot(a_exit)
+					)
+
+					var b_score: float = (
+						heading.dot(b_exit)
+					)
+
+					# The smaller score is the larger
+					# turn, so it comes first.
+					if absf(a_score - b_score) > 0.0001:
+						return a_score < b_score
+
+					# If both turns are equally large,
+					# favour the visually higher exit.
+					if absf(a_exit.y - b_exit.y) > 0.0001:
+						return a_exit.y < b_exit.y
+
+					# Consistent final tie-breaker.
+					return str(a["to"]) < str(b["to"])
+			)
+
+			return choices
+
+	# ====================================================
+	# DEFAULT CONNECTION ORDERING
+	# ====================================================
+
 	choices.sort_custom(
 		func(a: Dictionary, b: Dictionary) -> bool:
 
-			var ap: Array = a["path"]
-			var bp: Array = b["path"]
+			var a_path: Array = a["path"]
+			var b_path: Array = b["path"]
 
-			var ar: int = _direction_rank(ap[1] - ap[0])
-			var br: int = _direction_rank(bp[1] - bp[0])
-
-			return (
-				str(a["to"]) < str(b["to"])
-				if ar == br else ar < br
+			var a_direction: Vector2i = (
+				a_path[1] - a_path[0]
 			)
+
+			var b_direction: Vector2i = (
+				b_path[1] - b_path[0]
+			)
+
+			var a_rank: int = (
+				_direction_rank(a_direction)
+			)
+
+			var b_rank: int = (
+				_direction_rank(b_direction)
+			)
+
+			if a_rank == b_rank:
+				return str(a["to"]) < str(b["to"])
+
+			return a_rank < b_rank
 	)
 
 	return choices
+
+
+
+# ============================================================
+# INCOMING SIGNAL DIRECTION
+#
+# Uses actual grid positions, so it works for
+# both Square and X-stretched Rhombus.
+# ============================================================
+
+func _get_incoming_heading(
+	arrivals: Array
+) -> Vector2:
+
+	var heading := Vector2.ZERO
+
+	for arrival in arrivals:
+
+		var path: Array = arrival.get("path", [])
+
+		if path.size() < 2:
+			continue
+
+		var previous_cell: Vector2i = path[
+			path.size() - 2
+		]
+
+		var final_cell: Vector2i = path[
+			path.size() - 1
+		]
+
+		var direction: Vector2 = (
+			grid.cell_to_local(final_cell)
+			- grid.cell_to_local(previous_cell)
+		)
+
+		if direction.length_squared() > 0.001:
+			heading += direction.normalized()
+
+	if heading.length_squared() < 0.001:
+		return Vector2.ZERO
+
+	return heading.normalized()
+
+
+# ============================================================
+# PREFER FORWARD OUTGOING CONNECTIONS
+#
+# Score = 1.0  : straight ahead
+# Score = 0.0  : perpendicular
+# Score = -1.0 : reverse
+#
+# The best matching direction comes first.
+# ============================================================
+
+func _prefer_forward_links(
+	uid: String,
+	incoming_heading: Vector2
+) -> Array[Dictionary]:
+
+	var options: Array[Dictionary] = (
+		_outgoing_links(uid)
+	)
+
+	if incoming_heading.length_squared() < 0.001:
+		return options
+
+	options.sort_custom(
+		func(a: Dictionary, b: Dictionary) -> bool:
+
+			var a_path: Array = a["path"]
+			var b_path: Array = b["path"]
+
+			var a_heading: Vector2 = (
+				grid.cell_to_local(a_path[1])
+				- grid.cell_to_local(a_path[0])
+			).normalized()
+
+			var b_heading: Vector2 = (
+				grid.cell_to_local(b_path[1])
+				- grid.cell_to_local(b_path[0])
+			).normalized()
+
+			var a_score: float = (
+				incoming_heading.dot(a_heading)
+			)
+
+			var b_score: float = (
+				incoming_heading.dot(b_heading)
+			)
+
+			if absf(a_score - b_score) < 0.0001:
+				return str(a["to"]) < str(b["to"])
+
+			return a_score > b_score
+	)
+
+	return options
+
 
 
 func _direction_rank(direction: Vector2i) -> int:
@@ -1490,12 +2000,60 @@ func _direction_rank(direction: Vector2i) -> int:
 	return 3
 
 
+# ============================================================
+# DISPATCH SIGNAL
+# ============================================================
+
+
 func _dispatch_pulse(
 	from_uid: String,
 	choice: Dictionary
 ) -> void:
 
 	var path: Array[Vector2i] = choice["path"]
+
+	# ====================================================
+	# UPDATE ALTERNATING NODE DISPLAY
+	# ====================================================
+
+	if (
+		builder.nodes_by_id.has(from_uid)
+		and node_states.has(from_uid)
+	):
+
+		var node: PuzzleNode = (
+			builder.nodes_by_id[from_uid]
+		)
+
+		if node.kind == PuzzleNode.Kind.ALTERNATING:
+
+			var options: Array[Dictionary] = (
+				_outgoing_links(from_uid)
+			)
+
+			var selected_index: int = -1
+
+			for index in range(options.size()):
+
+				if str(options[index]["to"]) == str(
+					choice["to"]
+				):
+					selected_index = index
+					break
+
+			if selected_index >= 0:
+
+				node_states[from_uid][
+					"alternating_last_exit"
+				] = selected_index
+
+				node.set_alternating_display(
+					selected_index
+				)
+
+	# ====================================================
+	# DISPATCH ALONG THE STORED CONNECTION
+	# ====================================================
 
 	_dispatch_path(
 		from_uid,
@@ -1528,6 +2086,7 @@ func _dispatch_path(
 		+ _pending_repeater_emissions()
 		>= MAX_ACTIVE_PULSES
 	):
+
 		_finish(false, "Too many active pulses.")
 		return
 
@@ -1556,10 +2115,10 @@ func _path_length(path: Array[Vector2i]) -> int:
 
 	var length: int = 0
 
-	for i in range(path.size() - 1):
+	for index in range(path.size() - 1):
 
 		var difference: Vector2i = (
-			path[i + 1] - path[i]
+			path[index + 1] - path[index]
 		)
 
 		length += maxi(
@@ -1569,8 +2128,11 @@ func _path_length(path: Array[Vector2i]) -> int:
 
 	return length
 
+
 # ============================================================
 # COMPLETION
+#
+# Wait for all activity before reporting outcome.
 # ============================================================
 
 func _check_completion() -> void:
@@ -1582,30 +2144,46 @@ func _check_completion() -> void:
 	):
 		return
 
-	if (
+	if not node_failures.is_empty():
+
+		_finish(
+			false,
+			"%d node issue(s), Goals %d/%d. First: %s"
+			% [
+				node_failures.size(),
+				targets_reached,
+				targets_total,
+				node_failures[0]
+			]
+		)
+
+	elif (
 		targets_total > 0
 		and targets_reached == targets_total
 	):
+
 		_finish(
 			true,
-			"All Goal Targets filled and all pulses resolved."
+			"All Goal Targets filled; all signals resolved."
 		)
 
 	else:
+
 		_finish(
 			false,
-			"No pulses remaining. Goal Targets: %d/%d."
+			"No signals remaining. Goals %d/%d."
 			% [targets_reached, targets_total]
 		)
 
 
-func _finish(success: bool, reason: String) -> void:
+func _finish(
+	success: bool,
+	reason: String
+) -> void:
 
 	running = false
 	finished = true
 	failure_reason = reason
-
-	# Keep final signals and node state available for timeline.
 
 	if success:
 
@@ -1629,8 +2207,9 @@ func _set_status(message: String) -> void:
 	if status_label != null:
 		status_label.text = message
 
+
 # ============================================================
-# DRAW
+# DRAWING
 # ============================================================
 
 func _draw() -> void:
@@ -1651,13 +2230,22 @@ func _draw_node_rings() -> void:
 
 		var node: PuzzleNode = builder.nodes_by_id[uid]
 		var state: Dictionary = node_states[uid]
-		var center: Vector2 = to_local(node.global_position)
+
+		var centre: Vector2 = (
+			to_local(node.global_position)
+		)
 
 		if bool(state["broken"]):
 
 			draw_arc(
-				center, 29.0, 0.0, TAU, 40,
-				Color("#ff4545"), 4.0, true
+				centre,
+				29.0,
+				0.0,
+				TAU,
+				40,
+				Color("#ff4545"),
+				4.0,
+				true
 			)
 
 		elif bool(state["reached"]):
@@ -1669,8 +2257,8 @@ func _draw_node_rings() -> void:
 			)
 
 			draw_arc(
-				center, 29.0, 0.0, TAU, 40,
-				color, 4.0, true
+				centre, 29.0, 0.0, TAU,
+				40, color, 4.0, true
 			)
 
 		elif (
@@ -1688,8 +2276,7 @@ func _draw_node_rings() -> void:
 			)
 
 			var color: Color = (
-				PULSE_COLOR
-				if elapsed <= 0
+				PULSE_COLOR if elapsed <= 0
 				else REFRACTORY_COLOR
 			)
 
@@ -1700,13 +2287,10 @@ func _draw_node_rings() -> void:
 				color = Color("#64748b")
 
 			draw_arc(
-				center, 28.0, 0.0, TAU, 40,
-				color, 3.0, true
+				centre, 28.0, 0.0, TAU,
+				40, color, 3.0, true
 			)
 
-# ============================================================
-# SIGNAL TRAILS
-# ============================================================
 
 func _draw_pulses() -> void:
 
@@ -1731,13 +2315,21 @@ func _draw_pulses() -> void:
 	for pulse in pulses:
 
 		var key: String = _pulse_overlap_key(pulse)
-		var group_size: int = int(overlap_counts.get(key, 1))
-		var lane: int = int(drawn_counts.get(key, 0))
+
+		var group_size: int = int(
+			overlap_counts.get(key, 1)
+		)
+
+		var lane: int = int(
+			drawn_counts.get(key, 0)
+		)
 
 		drawn_counts[key] = lane + 1
 
 		var elapsed: float = (
-			float(current_tick - int(pulse["start_tick"]))
+			float(
+				current_tick - int(pulse["start_tick"])
+			)
 			+ fractional_tick
 		)
 
@@ -1747,12 +2339,15 @@ func _draw_pulses() -> void:
 			float(pulse["duration"])
 		)
 
+		# Fading pulse trail.
 		if (
 			trail_length_cells > 0.0
 			and trail_opacity > 0.0
 		):
 
-			for sample in range(trail_samples, 0, -1):
+			for sample in range(
+				trail_samples, 0, -1
+			):
 
 				var behind: float = (
 					trail_length_cells
@@ -1760,26 +2355,24 @@ func _draw_pulses() -> void:
 					/ float(trail_samples)
 				)
 
-				var distance_behind: float = (
+				var trail_distance: float = (
 					distance - behind
 				)
 
-				if distance_behind < 0.0:
+				if trail_distance < 0.0:
 					continue
 
-				var trail_visual: Dictionary = (
+				var trail: Dictionary = (
 					_pulse_visual_data(
 						pulse,
-						distance_behind,
+						trail_distance,
 						elapsed - behind,
 						lane,
 						group_size
 					)
 				)
 
-				var trail_color: Color = (
-					trail_visual["color"]
-				)
+				var color: Color = trail["color"]
 
 				var strength: float = (
 					1.0
@@ -1787,43 +2380,55 @@ func _draw_pulses() -> void:
 					/ float(trail_samples + 1)
 				)
 
-				trail_color.a = (
-					trail_opacity * strength * strength
+				color.a = (
+					trail_opacity
+					* strength
+					* strength
 				)
 
-				var trail_radius: float = (
-					float(trail_visual["radius"])
+				var radius: float = (
+					float(trail["radius"])
 					* (0.2 + 0.65 * strength)
 				)
 
-				var trail_center: Vector2 = to_local(
-					grid.to_global(trail_visual["position"])
+				var centre: Vector2 = to_local(
+					grid.to_global(
+						trail["position"]
+					)
 				)
 
 				draw_circle(
-					trail_center,
-					trail_radius,
-					trail_color
+					centre,
+					radius,
+					color
 				)
 
-		var visual: Dictionary = _pulse_visual_data(
-			pulse,
-			distance,
-			elapsed,
-			lane,
-			group_size
+		var visual: Dictionary = (
+			_pulse_visual_data(
+				pulse,
+				distance,
+				elapsed,
+				lane,
+				group_size
+			)
 		)
 
-		var center: Vector2 = to_local(
+		var centre: Vector2 = to_local(
 			grid.to_global(visual["position"])
 		)
 
-		var radius: float = float(visual["radius"])
+		var radius: float = float(
+			visual["radius"]
+		)
 
-		draw_circle(center, radius, visual["color"])
+		draw_circle(
+			centre,
+			radius,
+			visual["color"]
+		)
 
 		draw_arc(
-			center,
+			centre,
 			radius + 2.0,
 			0.0,
 			TAU,
@@ -1845,7 +2450,10 @@ func _pulse_visual_data(
 	var path: Array[Vector2i] = pulse["path"]
 
 	var position: Vector2 = (
-		connection_layer.get_visual_point(path, distance)
+		connection_layer.get_visual_point(
+			path,
+			distance
+		)
 	)
 
 	var color: Color = PULSE_COLOR
@@ -1854,7 +2462,8 @@ func _pulse_visual_data(
 	if group_size > 1:
 
 		var phase: float = (
-			TAU * distance / maxf(wavelength_cells, 0.01)
+			TAU * distance
+				/ maxf(wavelength_cells, 0.01)
 			+ TAU * elapsed * rotation_speed
 		)
 
@@ -1868,11 +2477,13 @@ func _pulse_visual_data(
 
 		var normal: Vector2 = (
 			_tangent_on_path(path, distance)
-			.orthogonal().normalized()
+			.orthogonal()
+			.normalized()
 		)
 
 		var fraction: float = clampf(
-			distance / maxf(float(pulse["duration"]), 1.0),
+			distance
+				/ maxf(float(pulse["duration"]), 1.0),
 			0.0,
 			1.0
 		)
@@ -1889,7 +2500,9 @@ func _pulse_visual_data(
 		radius = maxf(
 			2.5,
 			base_pulse_radius
-			+ cos(orbit_angle) * size_variation * fade
+				+ cos(orbit_angle)
+				* size_variation
+				* fade
 		)
 
 		if lane % 2 == 1:
@@ -1902,7 +2515,9 @@ func _pulse_visual_data(
 	}
 
 
-func _pulse_overlap_key(pulse: Dictionary) -> String:
+func _pulse_overlap_key(
+	pulse: Dictionary
+) -> String:
 
 	return "%s|%s|%d|%s" % [
 		str(pulse["from"]),
@@ -1929,43 +2544,37 @@ func _tangent_on_path(
 		distance_cells + 0.04
 	)
 
-	var p0: Vector2 = connection_layer.get_visual_point(
-		path,
-		before
+	var p0: Vector2 = (
+		connection_layer.get_visual_point(
+			path, before
+		)
 	)
 
-	var p1: Vector2 = connection_layer.get_visual_point(
-		path,
-		after
+	var p1: Vector2 = (
+		connection_layer.get_visual_point(
+			path, after
+		)
 	)
 
 	var direction: Vector2 = p1 - p0
 
-	return (
-		direction.normalized()
-		if direction.length_squared() > 0.0001
-		else Vector2.RIGHT
-	)
+	if direction.length_squared() > 0.0001:
+		return direction.normalized()
+
+	return Vector2.RIGHT
+
 
 # ============================================================
-# EM6 SIMULATION CONTROLS
+# TIMELINE CONTROLS
 # ============================================================
 
 func _on_speed_selected(index: int) -> void:
 
 	match index:
-
-		0:
-			playback_speed = 0.5
-
-		1:
-			playback_speed = 1.0
-
-		2:
-			playback_speed = 2.0
-
-		3:
-			playback_speed = 4.0
+		0: playback_speed = 0.5
+		1: playback_speed = 1.0
+		2: playback_speed = 2.0
+		3: playback_speed = 4.0
 
 
 func _toggle_pause() -> void:
@@ -1981,7 +2590,6 @@ func _toggle_pause() -> void:
 
 	paused = not paused
 	tick_accumulator = 0.0
-
 	_refresh_timeline_ui()
 
 
@@ -2054,7 +2662,9 @@ func _refresh_timeline_ui() -> void:
 		)
 	)
 
-	step_back_button.disabled = timeline_cursor <= 0
+	step_back_button.disabled = (
+		timeline_cursor <= 0
+	)
 
 	step_forward_button.disabled = (
 		selected_start_id.is_empty()
@@ -2064,8 +2674,9 @@ func _refresh_timeline_ui() -> void:
 		)
 	)
 
+
 # ============================================================
-# TIMELINE SNAPSHOTS
+# SNAPSHOTS
 # ============================================================
 
 func _save_snapshot() -> void:
@@ -2078,6 +2689,7 @@ func _save_snapshot() -> void:
 		"running": running,
 		"finished": finished,
 		"failure_reason": failure_reason,
+		"node_failures": node_failures.duplicate(),
 		"status": (
 			status_label.text
 			if status_label != null
@@ -2110,7 +2722,12 @@ func _restore_snapshot(index: int) -> void:
 	current_tick = int(snapshot["tick"])
 	running = bool(snapshot["running"])
 	finished = bool(snapshot["finished"])
+
 	failure_reason = str(snapshot["failure_reason"])
+
+	node_failures.assign(
+		snapshot.get("node_failures", [])
+	)
 
 	pulses.assign(
 		snapshot["pulses"].duplicate(true)
@@ -2124,9 +2741,13 @@ func _restore_snapshot(index: int) -> void:
 		snapshot["repeater_jobs"].duplicate(true)
 	)
 
-	node_states = snapshot["node_states"].duplicate(true)
+	node_states = (
+		snapshot["node_states"].duplicate(true)
+	)
 
-	targets_reached = int(snapshot["targets_reached"])
+	targets_reached = int(
+		snapshot["targets_reached"]
+	)
 
 	gate_rules.states = (
 		snapshot["gate_states"].duplicate(true)
@@ -2140,12 +2761,16 @@ func _restore_snapshot(index: int) -> void:
 	paused = true
 	tick_accumulator = 0.0
 
-	tick_label.text = "Tick: %d" % current_tick
+	tick_label.text = (
+		"Tick: %d" % current_tick
+	)
+
 	_set_status(str(snapshot["status"]))
 
 	_refresh_snapshot_node_visuals()
 	_refresh_timeline_ui()
 	queue_redraw()
+
 
 
 func _refresh_snapshot_node_visuals() -> void:
@@ -2156,7 +2781,6 @@ func _refresh_snapshot_node_visuals() -> void:
 		var node: PuzzleNode = builder.nodes_by_id[uid]
 		var state: Dictionary = node_states[uid]
 
-		# Restore counter state without activation wobble.
 		node.clear_test_display()
 
 		node.set_test_display(
@@ -2169,6 +2793,17 @@ func _refresh_snapshot_node_visuals() -> void:
 		node.scale = Vector2.ONE
 		node.rotation = node.resting_rotation
 
+		if node.kind == PuzzleNode.Kind.ALTERNATING:
+
+			node.set_alternating_display(
+				int(
+					state.get(
+						"alternating_last_exit",
+						-1
+					)
+				)
+			)
+
 		if node.kind == PuzzleNode.Kind.REPEATER:
 
 			var remaining: int = 0
@@ -2176,6 +2811,7 @@ func _refresh_snapshot_node_visuals() -> void:
 			for job in repeater_jobs:
 
 				if str(job["uid"]) == uid:
+
 					remaining = int(job["remaining"])
 					break
 
@@ -2189,18 +2825,111 @@ func _refresh_snapshot_node_visuals() -> void:
 
 
 
-func _get_begin_node_id() -> String:
-	var begin_id: String = ""
 
-	for key in builder.nodes_by_id.keys():
-		var node: PuzzleNode = builder.nodes_by_id[key]
+# ============================================================
+# ALTERNATING NODE ACTIVATION
+#
+# - Each signal is processed independently
+# - Signals may arrive on different ticks
+# - Initial branch is configurable
+# - Direction changes after each accepted signal
+# - Activation cap counts individual signals
+# - Refractory timing does not block alternation
+# ============================================================
 
-		if node.kind != PuzzleNode.Kind.BEGIN:
-			continue
+func _activate_alternating(
+	uid: String,
+	node: PuzzleNode,
+	state: Dictionary,
+	arrivals: Array
+) -> void:
 
-		if not begin_id.is_empty():
-			return ""
+	if bool(state.get("broken", false)):
+		return
 
-		begin_id = str(key)
+	var options: Array[Dictionary] = _outgoing_links(uid)
 
-	return begin_id
+	if options.is_empty():
+		_record_node_failure(
+			uid,
+			"Alternating Node has no outgoing connection"
+		)
+		return
+
+	# Order two exits visually, upper before lower.
+	# Use screen positions, not square-grid directions.
+	options.sort_custom(
+		func(a: Dictionary, b: Dictionary) -> bool:
+
+			var a_path: Array = a["path"]
+			var b_path: Array = b["path"]
+
+			var a_point: Vector2 = grid.cell_to_local(
+				a_path[1]
+			)
+
+			var b_point: Vector2 = grid.cell_to_local(
+				b_path[1]
+			)
+
+			if absf(a_point.y - b_point.y) > 0.001:
+				return a_point.y < b_point.y
+
+			return str(a["to"]) < str(b["to"])
+	)
+
+	var cursor: int = int(state.get("cursor", 0))
+	var used: int = int(state.get("activations", 0))
+	var capacity: int = node.activation_cap
+
+	for arrival in arrivals:
+
+		# Capacity is the total number of signals
+		# that have been allowed through the node.
+		if used >= capacity:
+			_record_node_failure(
+				uid,
+				"Alternating Node capacity exhausted"
+			)
+			return
+
+		var selected_index: int = 0
+
+		if options.size() > 1:
+
+			selected_index = (
+				node.alternating_first_branch + cursor
+			) % options.size()
+
+		_dispatch_pulse(
+			uid,
+			options[selected_index]
+		)
+
+		if not running:
+			return
+
+		used += 1
+		cursor += 1
+
+		state["activations"] = used
+		state["cursor"] = cursor
+		state["last_tick"] = current_tick
+
+		# Display the NEXT selected branch.
+		var next_index: int = 0
+
+		if options.size() > 1:
+			next_index = (
+				node.alternating_first_branch + cursor
+			) % options.size()
+
+		state["alternating_last_exit"] = next_index
+
+		node.set_test_display(
+			true,
+			used,
+			false
+		)
+
+		node.set_alternating_display(next_index)

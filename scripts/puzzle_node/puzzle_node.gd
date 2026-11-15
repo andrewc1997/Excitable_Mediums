@@ -75,6 +75,16 @@ enum Direction { NORTH, EAST, SOUTH, WEST }
 		queue_redraw()
 @export var linked_target_uid: String = "" # Legacy only.
 
+
+@export_category("Alternating Node")
+
+@export_enum("Upper Branch", "Lower Branch")
+var alternating_first_branch: int = 0:
+	set(value):
+		alternating_first_branch = clampi(value, 0, 1)
+		queue_redraw()
+
+
 var selected: bool = false:
 	set(value):
 		selected = value
@@ -87,6 +97,7 @@ var runtime_delay_held: int = 0
 var runtime_delay_remaining: int = 0
 var runtime_repeater_active: bool = false
 var runtime_repeat_remaining: int = 0
+var runtime_alternating_exit: int = -1
 
 @export_category("Activation Animation")
 @export_range(0.0, 0.5, 0.01) var pop_strength: float = 0.18
@@ -245,22 +256,35 @@ func set_repeater_display(active: bool, remaining: int) -> void:
 	runtime_repeater_active = active
 	runtime_repeat_remaining = maxi(0, remaining)
 	queue_redraw()
+
+
+
 func clear_test_display() -> void:
+
 	runtime_test_mode = false
 	runtime_activations = 0
 	runtime_broken = false
 	runtime_blocker_open = false
+
 	runtime_delay_held = 0
 	runtime_delay_remaining = 0
+
 	runtime_repeater_active = false
 	runtime_repeat_remaining = 0
+
+	runtime_alternating_exit = -1
+
 	pop_time_remaining = 0.0
 	delay_charge_progress = 0.0
 	delay_release_remaining = 0.0
 	delay_releasing = false
+
 	scale = Vector2.ONE
 	rotation = resting_rotation
+
 	queue_redraw()
+
+
 
 func get_target_fill_fraction() -> float:
 	if not is_target() or not runtime_test_mode: return 0.0
@@ -280,72 +304,173 @@ func _draw_target_fill(fraction: float) -> void:
 		points.append(Vector2(cos(angle) * RADIUS, sin(angle) * RADIUS))
 	draw_colored_polygon(points, color)
 
+
+
 func _draw() -> void:
+
 	var color: Color = NORMAL_COLOR
 	var symbol: String = ""
+
 	match kind:
+
 		Kind.SPLITTER:
 			color = SPLITTER_COLOR
-			symbol = "%d<%d" % [required_inputs, output_count]
+			symbol = "%d<%d" % [
+				required_inputs,
+				output_count
+			]
+
 		Kind.ALTERNATING:
 			color = ALTERNATING_COLOR
-			symbol = "A"
+
 		Kind.TARGET:
 			color = TARGET_COLOR
 			symbol = "T"
+
 		Kind.TRIGGER_TARGET:
 			color = get_channel_color().darkened(0.45)
 			symbol = "T"
-		Kind.BLOCKER_SINGLE, Kind.BLOCKER_AMOUNT: color = BLOCKER_COLOR
-		Kind.BLOCKER_TARGET: color = get_channel_color().darkened(0.55)
-		Kind.GATE_AMOUNT: color = GATE_COLOR
-		Kind.DELAY: color = DELAY_COLOR
-		Kind.REPEATER: color = REPEATER_COLOR
-		Kind.BOUNCE: color = BOUNCE_COLOR
-		Kind.ONE_WAY_GATE: color = ONE_WAY_COLOR
-		
-		Kind.BEGIN:
-			color = BEGIN_COLOR
 
-	if runtime_broken: color = BROKEN_COLOR
+		Kind.BLOCKER_SINGLE, Kind.BLOCKER_AMOUNT:
+			color = BLOCKER_COLOR
+
+		Kind.BLOCKER_TARGET:
+			color = get_channel_color().darkened(0.55)
+
+		Kind.GATE_AMOUNT:
+			color = GATE_COLOR
+
+		Kind.DELAY:
+			color = DELAY_COLOR
+
+		Kind.REPEATER:
+			color = REPEATER_COLOR
+
+		Kind.BOUNCE:
+			color = BOUNCE_COLOR
+
+		Kind.ONE_WAY_GATE:
+			color = ONE_WAY_COLOR
+
+	if runtime_broken:
+		color = BROKEN_COLOR
+
 	if selected:
-		draw_arc(Vector2.ZERO, RADIUS + 7.0, 0.0, TAU, 48, SELECTION_COLOR, 3.0, true)
-	draw_circle(Vector2.ZERO, RADIUS, color)
-	if is_target() and not runtime_broken: _draw_target_fill(get_target_fill_fraction())
-	var outline: Color = get_channel_color() if uses_channel() else Color.WHITE
-	draw_arc(Vector2.ZERO, RADIUS, 0.0, TAU, 48, outline, 2.5, true)
+
+		draw_arc(
+			Vector2.ZERO,
+			RADIUS + 7.0,
+			0.0,
+			TAU,
+			48,
+			SELECTION_COLOR,
+			3.0,
+			true
+		)
+
+	draw_circle(
+		Vector2.ZERO,
+		RADIUS,
+		color
+	)
+
+	if is_target() and not runtime_broken:
+
+		_draw_target_fill(
+			get_target_fill_fraction()
+		)
+
+	var outline: Color = (
+		get_channel_color()
+		if uses_channel()
+		else Color.WHITE
+	)
+
+	draw_arc(
+		Vector2.ZERO,
+		RADIUS,
+		0.0,
+		TAU,
+		48,
+		outline,
+		2.5,
+		true
+	)
+
 	match kind:
+
 		Kind.NORMAL:
-			draw_circle(Vector2.ZERO, 2.0, Color.WHITE)
+
+			draw_circle(
+				Vector2.ZERO,
+				2.0,
+				Color.WHITE
+			)
+
+		Kind.ALTERNATING:
+			_draw_alternating_symbol()
+
 		Kind.BLOCKER_SINGLE, Kind.BLOCKER_AMOUNT, Kind.BLOCKER_TARGET:
 			_draw_blocker_symbol()
+
 		Kind.GATE_AMOUNT:
 			_draw_gate_symbol()
+
 		Kind.ONE_WAY_GATE:
 			_draw_one_way_symbol()
+
 		Kind.DELAY:
 			_draw_delay_symbol()
+
 		Kind.REPEATER:
 			_draw_repeater_symbol()
+
 		Kind.BOUNCE:
 			_draw_bounce_symbol()
-			
-		Kind.BEGIN:
-			var arrow := PackedVector2Array([
-				Vector2(-7, -12),
-				Vector2(12, 0),
-				Vector2(-7, 12)
-			])
-			draw_colored_polygon(arrow, Color.WHITE)
 
 		_:
-			_draw_centered_text(symbol, -1.0, 12 if kind == Kind.SPLITTER else 15, Color.WHITE)
-			_draw_centered_text(get_counter_text(), 12.0, 10, Color.WHITE)
+
+			_draw_centered_text(
+				symbol,
+				-1.0,
+				12 if kind == Kind.SPLITTER else 15,
+				Color.WHITE
+			)
+
+			_draw_centered_text(
+				get_counter_text(),
+				12.0,
+				10,
+				Color.WHITE
+			)
+
 			if kind == Kind.TRIGGER_TARGET:
-				draw_circle(Vector2(13, -12), 3.5, get_channel_color())
+
+				draw_circle(
+					Vector2(13, -12),
+					3.5,
+					get_channel_color()
+				)
+
 	if runtime_broken:
-		draw_line(Vector2(-15,-15), Vector2(15,15), Color.WHITE, 2.5, true)
-		draw_line(Vector2(15,-15), Vector2(-15,15), Color.WHITE, 2.5, true)
+
+		draw_line(
+			Vector2(-15, -15),
+			Vector2(15, 15),
+			Color.WHITE,
+			2.5,
+			true
+		)
+
+		draw_line(
+			Vector2(15, -15),
+			Vector2(-15, 15),
+			Color.WHITE,
+			2.5,
+			true
+		)
+
+
 
 func _draw_blocker_symbol() -> void:
 	if runtime_test_mode and runtime_blocker_open:
@@ -416,3 +541,78 @@ func _draw_centered_text(message: String, baseline_y: float, font_size: int, col
 	draw_string(font, Vector2(-width / 2.0, baseline_y), message, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
 func refresh_visuals() -> void:
 	queue_redraw()
+
+
+
+func set_alternating_display(
+	exit_index: int
+) -> void:
+
+	runtime_alternating_exit = exit_index
+	queue_redraw()
+
+
+func _draw_alternating_symbol() -> void:
+
+	# A forked path, like a small railway switch.
+	# The highlighted branch is the last one used.
+	#
+	# Before testing, the upper branch is shown
+	# as the initial default.
+
+	var incoming_start := Vector2(-16.0, 0.0)
+	var junction := Vector2(-2.0, 0.0)
+
+	var upper_exit := Vector2(15.0, -11.0)
+	var lower_exit := Vector2(15.0, 11.0)
+
+	var inactive_color := Color("#e5f2f5")
+	var active_color := Color("#ff555d")
+
+	var selected_exit: int = (
+		0 if runtime_alternating_exit < 0
+		else runtime_alternating_exit
+	)
+
+	# Incoming bridge.
+	draw_line(
+		incoming_start,
+		junction,
+		inactive_color,
+		3.0,
+		true
+	)
+
+	# Upper branch.
+	draw_line(
+		junction,
+		upper_exit,
+		active_color if selected_exit % 2 == 0
+		else inactive_color,
+		3.6,
+		true
+	)
+
+	# Lower branch.
+	draw_line(
+		junction,
+		lower_exit,
+		active_color if selected_exit % 2 == 1
+		else inactive_color,
+		3.6,
+		true
+	)
+
+	draw_circle(
+		junction,
+		2.4,
+		Color.WHITE
+	)
+
+	# Keep remaining activation count visible.
+	_draw_centered_text(
+		get_counter_text(),
+		19.0,
+		10,
+		Color.WHITE
+	)

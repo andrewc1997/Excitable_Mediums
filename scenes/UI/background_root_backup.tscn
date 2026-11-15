@@ -1,4 +1,4 @@
-[gd_scene load_steps=22 format=3 uid="uid://u3uddvfepnvd"]
+[gd_scene load_steps=42 format=3 uid="uid://u3uddvfepnvd"]
 
 [ext_resource type="Shader" path="res://shader/backgroundshader.gdshader" id="1_v7p2e"]
 [ext_resource type="Script" path="res://scripts/ui/PCB_Pulse_Manager.gd" id="2_dtn7v"]
@@ -40,9 +40,9 @@ point_count = 3
 
 [sub_resource type="Curve2D" id="Curve2D_eifbd"]
 _data = {
-"points": PackedVector2Array(0, 0, 0, 0, 78, 104, 0, 0, 0, 0, 114, 104, 0, 0, 0, 0, 114, 440)
+"points": PackedVector2Array(0, 0, 0, 0, 78, 104, 0, 0, 0, 0, 106, 104, 0, 0, 0, 0, 105.999, 216, 0, 0, 0, 0, 113.999, 216)
 }
-point_count = 3
+point_count = 4
 
 [sub_resource type="Curve2D" id="Curve2D_pcrkd"]
 _data = {
@@ -76,7 +76,7 @@ point_count = 3
 
 [sub_resource type="Curve2D" id="Curve2D_blstp"]
 _data = {
-"points": PackedVector2Array(0, 0, 0, 0, -24, 104, 0, 0, 0, 0, 110, 104, 0, 0, 0, 0, 110, 128, 0, 0, 0, 0, 134, 128, 0, 0, 0, 0, 134, 72, 0, 0, 0, 0, 86, 72)
+"points": PackedVector2Array(0, 0, 0, 0, 14.0004, 104, 0, 0, 0, 0, 110, 104, 0, 0, 0, 0, 110, 128, 0, 0, 0, 0, 126, 128, 0, 0, 0, 0, 126, 79.9995, 0, 0, 0, 0, 108, 79.9996)
 }
 point_count = 6
 
@@ -94,19 +94,19 @@ point_count = 2
 
 [sub_resource type="Curve2D" id="Curve2D_onfqq"]
 _data = {
-"points": PackedVector2Array(0, 0, 0, 0, -24, 104, 0, 0, 0, 0, 112, 104)
+"points": PackedVector2Array(0, 0, 0, 0, -20.9996, 102, 0, 0, 0, 0, 107, 102, 0, 0, 0, 0, 107, 85.9996, 0, 0, 0, 0, 91.0003, 85.9997)
 }
-point_count = 2
+point_count = 4
 
 [sub_resource type="Curve2D" id="Curve2D_trldi"]
 _data = {
-"points": PackedVector2Array(0, 0, 0, 0, -24, 104, 0, 0, 0, 0, 112, 104)
+"points": PackedVector2Array(0, 0, 0, 0, 67.0004, 99.9998, 0, 0, 0, 0, 123, 99.9995, 0, 0, 0, 0, 123, 124)
 }
-point_count = 2
+point_count = 3
 
 [sub_resource type="Curve2D" id="Curve2D_220wo"]
 _data = {
-"points": PackedVector2Array(0, 0, 0, 0, -24, 104, 0, 0, 0, 0, 114, 106, 0, 0, 0, 0, 114, 82, 0, 0, 0, 0, 90, 82)
+"points": PackedVector2Array(0, 0, 0, 0, -24, 104, 0, 0, 0, 0, 114, 106, 0, 0, 0, 0, 114, 65.9996, 0, 0, 0, 0, 98.0002, 65.9996)
 }
 point_count = 4
 
@@ -115,6 +115,126 @@ _data = {
 "points": PackedVector2Array(0, 0, 0, 0, -25, 109, 0, 0, 0, 0, 175, 109)
 }
 point_count = 2
+
+[sub_resource type="Curve2D" id="Curve2D_2486l"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, 36, 112, 0, 0, 0, 0, 92, 112)
+}
+point_count = 2
+
+[sub_resource type="Curve2D" id="Curve2D_dbmwf"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, 19, 111, 0, 0, 0, 0, 92, 112)
+}
+point_count = 2
+
+[sub_resource type="Curve2D" id="Curve2D_ctdlk"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, 19, 111, 0, 0, 0, 0, 92, 112)
+}
+point_count = 2
+
+[sub_resource type="Curve2D" id="Curve2D_grudd"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, -5.00006, 382, 0, 0, 0, 0, 58.9999, 382, 0, 0, 0, 0, 58.9999, 526, 0, 0, 0, 0, 90.9999, 526)
+}
+point_count = 4
+
+[sub_resource type="Curve2D" id="Curve2D_c2qky"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, -5.00006, 630, 0, 0, 0, 0, 115, 630, 0, 0, 0, 0, 115, 670, 0, 0, 0, 0, 74.9999, 670)
+}
+point_count = 4
+
+[sub_resource type="Curve2D" id="Curve2D_ga5e2"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, 419, 718, 0, 0, 0, 0, 419, 670, 0, 0, 0, 0, 435, 670, 0, 0, 0, 0, 435, 646, 0, 0, 0, 0, 451, 646)
+}
+point_count = 5
+
+[sub_resource type="Curve2D" id="Curve2D_vfqfr"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, 275, 734, 0, 0, 0, 0, 275, 686, 0, 0, 0, 0, 531, 686, 0, 0, 0, 0, 531, 662, 0, 0, 0, 0, 499, 662)
+}
+point_count = 5
+
+[sub_resource type="Curve2D" id="Curve2D_tt8uh"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, 683, 582, 0, 0, 0, 0, 659, 582, 0, 0, 0, 0, 659, 598)
+}
+point_count = 3
+
+[sub_resource type="Curve2D" id="Curve2D_akcwj"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, 683, 566, 0, 0, 0, 0, 643, 566)
+}
+point_count = 2
+
+[sub_resource type="Curve2D" id="Curve2D_a2vdl"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, 683, 550, 0, 0, 0, 0, 619, 550)
+}
+point_count = 2
+
+[sub_resource type="Curve2D" id="Curve2D_e43le"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, 36, 64, 0, 0, 0, 0, 68, 64, 0, 0, 0, 0, 68, -96)
+}
+point_count = 3
+
+[sub_resource type="Curve2D" id="Curve2D_pm5yw"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, 12, 0, 0, 0, 0, 0, 76, 0, 0, 0, 0, 0, 76, -104, 0, 0, 0, 0, 100, -104, 0, 0, 0, 0, 100, -80)
+}
+point_count = 5
+
+[sub_resource type="Curve2D" id="Curve2D_hb8s2"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, 26.0001, 25.9999, 0, 0, 0, 0, 66.0001, 25.9998, 0, 0, 0, 0, 65.9999, -14.0002)
+}
+point_count = 3
+
+[sub_resource type="Curve2D" id="Curve2D_lvgwy"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, 459, 715, 0, 0, 0, 0, 459, 675)
+}
+point_count = 2
+
+[sub_resource type="Curve2D" id="Curve2D_yjco5"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, 459, 715, 0, 0, 0, 0, 459, 675)
+}
+point_count = 2
+
+[sub_resource type="Curve2D" id="Curve2D_gyuao"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, 459, 715, 0, 0, 0, 0, 459, 675)
+}
+point_count = 2
+
+[sub_resource type="Curve2D" id="Curve2D_gm3hy"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, 459, 715, 0, 0, 0, 0, 459, 675, 0, 0, 0, 0, 442, 675, 0, 0, 0, 0, 442, 659)
+}
+point_count = 4
+
+[sub_resource type="Curve2D" id="Curve2D_0v3dn"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, 138, -181, 0, 0, 0, 0, 178, -181, 0, 0, 0, 0, 178, -165)
+}
+point_count = 3
+
+[sub_resource type="Curve2D" id="Curve2D_bhchr"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, 138, -182, 0, 0, 0, 0, 186, -182, 0, 0, 0, 0, 186, -166)
+}
+point_count = 3
+
+[sub_resource type="Curve2D" id="Curve2D_mcvpc"]
+_data = {
+"points": PackedVector2Array(0, 0, 0, 0, 138, -183, 0, 0, 0, 0, 210, -183, 0, 0, 0, 0, 210, -199, 0, 0, 0, 0, 226, -199)
+}
+point_count = 4
 
 [node name="BackgroundRoot" type="Control"]
 layout_mode = 3
@@ -142,6 +262,9 @@ color = Color(0.808031, 0.955766, 0.999144, 1)
 
 [node name="PCB_PulseManager" type="Node" parent="PCBLayer"]
 script = ExtResource("2_dtn7v")
+min_delay = 0.0
+max_delay = 0.75
+max_simultaneous = 13
 
 [node name="PCB_Circuit" parent="PCBLayer" instance=ExtResource("3_w3v67")]
 
@@ -207,12 +330,12 @@ rotation = 1.5708
 curve = SubResource("Curve2D_lqdk4")
 
 [node name="PCB_Circuit15" parent="PCBLayer" instance=ExtResource("4_hg6jx")]
-position = Vector2(1000, -30)
+position = Vector2(1000, -52)
 rotation = 1.5708
 curve = SubResource("Curve2D_blstp")
 
 [node name="PCB_Circuit16" parent="PCBLayer" instance=ExtResource("4_hg6jx")]
-position = Vector2(1200, 0)
+position = Vector2(1200, -15)
 rotation = 1.5708
 curve = SubResource("Curve2D_hnvxa")
 
@@ -240,3 +363,102 @@ curve = SubResource("Curve2D_220wo")
 position = Vector2(125, 25)
 rotation = 1.5708
 curve = SubResource("Curve2D_jg4g7")
+
+[node name="PCB_Circuit22" parent="PCBLayer" instance=ExtResource("4_hg6jx")]
+position = Vector2(400, 700)
+rotation = -1.5708
+curve = SubResource("Curve2D_2486l")
+
+[node name="PCB_Circuit23" parent="PCBLayer" instance=ExtResource("4_hg6jx")]
+position = Vector2(425, 675)
+rotation = -1.5708
+curve = SubResource("Curve2D_dbmwf")
+
+[node name="PCB_Circuit24" parent="PCBLayer" instance=ExtResource("4_hg6jx")]
+position = Vector2(450, 675)
+rotation = -1.5708
+curve = SubResource("Curve2D_ctdlk")
+
+[node name="PCB_Circuit25" parent="PCBLayer" instance=ExtResource("4_hg6jx")]
+position = Vector2(450, 675)
+rotation = -1.5708
+curve = SubResource("Curve2D_grudd")
+
+[node name="PCB_Circuit26" parent="PCBLayer" instance=ExtResource("4_hg6jx")]
+position = Vector2(450, 675)
+rotation = -1.5708
+curve = SubResource("Curve2D_c2qky")
+
+[node name="PCB_Circuit27" parent="PCBLayer" instance=ExtResource("4_hg6jx")]
+position = Vector2(450, 675)
+rotation = -1.5708
+curve = SubResource("Curve2D_ga5e2")
+
+[node name="PCB_Circuit28" parent="PCBLayer" instance=ExtResource("4_hg6jx")]
+position = Vector2(450, 675)
+rotation = -1.5708
+curve = SubResource("Curve2D_vfqfr")
+
+[node name="PCB_Circuit29" parent="PCBLayer" instance=ExtResource("4_hg6jx")]
+position = Vector2(450, 675)
+rotation = -1.5708
+curve = SubResource("Curve2D_tt8uh")
+
+[node name="PCB_Circuit30" parent="PCBLayer" instance=ExtResource("4_hg6jx")]
+position = Vector2(450, 675)
+rotation = -1.5708
+curve = SubResource("Curve2D_akcwj")
+
+[node name="PCB_Circuit31" parent="PCBLayer" instance=ExtResource("4_hg6jx")]
+position = Vector2(450, 675)
+rotation = -1.5708
+curve = SubResource("Curve2D_a2vdl")
+
+[node name="PCB_Circuit32" parent="PCBLayer" instance=ExtResource("4_hg6jx")]
+position = Vector2(400, 700)
+rotation = -1.5708
+curve = SubResource("Curve2D_e43le")
+
+[node name="PCB_Circuit33" parent="PCBLayer" instance=ExtResource("4_hg6jx")]
+position = Vector2(-60, 360)
+curve = SubResource("Curve2D_pm5yw")
+
+[node name="PCB_Circuit34" parent="PCBLayer/PCB_Circuit33" instance=ExtResource("4_hg6jx")]
+position = Vector2(470, -410)
+rotation = 1.5708
+curve = SubResource("Curve2D_hb8s2")
+
+[node name="PCB_Circuit35" parent="PCBLayer/PCB_Circuit33" instance=ExtResource("4_hg6jx")]
+position = Vector2(505, 315)
+rotation = -1.5708
+curve = SubResource("Curve2D_lvgwy")
+
+[node name="PCB_Circuit36" parent="PCBLayer/PCB_Circuit33" instance=ExtResource("4_hg6jx")]
+position = Vector2(505, 315)
+rotation = -1.5708
+curve = SubResource("Curve2D_yjco5")
+
+[node name="PCB_Circuit37" parent="PCBLayer/PCB_Circuit33" instance=ExtResource("4_hg6jx")]
+position = Vector2(505, 435)
+rotation = -1.5708
+curve = SubResource("Curve2D_gyuao")
+
+[node name="PCB_Circuit38" parent="PCBLayer/PCB_Circuit33" instance=ExtResource("4_hg6jx")]
+position = Vector2(505, 450)
+rotation = -1.5708
+curve = SubResource("Curve2D_gm3hy")
+
+[node name="PCB_Circuit39" parent="PCBLayer/PCB_Circuit33" instance=ExtResource("4_hg6jx")]
+position = Vector2(505, 450)
+rotation = -1.5708
+curve = SubResource("Curve2D_0v3dn")
+
+[node name="PCB_Circuit40" parent="PCBLayer/PCB_Circuit33" instance=ExtResource("4_hg6jx")]
+position = Vector2(490, 450)
+rotation = -1.5708
+curve = SubResource("Curve2D_bhchr")
+
+[node name="PCB_Circuit41" parent="PCBLayer/PCB_Circuit33" instance=ExtResource("4_hg6jx")]
+position = Vector2(475, 450)
+rotation = -1.5708
+curve = SubResource("Curve2D_mcvpc")

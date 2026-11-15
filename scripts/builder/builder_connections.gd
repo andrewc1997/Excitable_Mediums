@@ -270,6 +270,8 @@ func get_path_length(
 # Return value is in GRID-LOCAL coordinates.
 # ============================================================
 
+
+
 func get_visual_point(
 	path: Array[Vector2i],
 	distance_cells: float
@@ -289,62 +291,111 @@ func get_visual_point(
 		total_length
 	)
 
-	# --------------------------------------------
-	# CHECK ROUNDED CORNERS
-	# --------------------------------------------
+	# ====================================================
+	# SQUARE GRID: ROUNDED CORNERS
+	# RHOMBUS GRID: EXACT, SHARP LATTICE CORNERS
+	# ====================================================
 
-	if corner_radius_cells > 0.0:
+	var use_rounded_corners: bool = (
+		corner_radius_cells > 0.0
+	)
+
+	if grid is SquarePuzzleGrid:
+
+		var live_grid: SquarePuzzleGrid = (
+			grid as SquarePuzzleGrid
+		)
+
+		if live_grid.is_rhombus():
+			use_rounded_corners = false
+
+	if use_rounded_corners:
 
 		var distance_to_corner: float = 0.0
 
 		for i in range(1, path.size() - 1):
 
-			var previous: Vector2 = Vector2(
+			var previous_delta: Vector2i = (
 				path[i] - path[i - 1]
 			)
 
-			var following: Vector2 = Vector2(
+			var next_delta: Vector2i = (
 				path[i + 1] - path[i]
 			)
 
-			var previous_length: float = (
-				previous.length()
+			var previous_length: float = float(
+				maxi(
+					absi(previous_delta.x),
+					absi(previous_delta.y)
+				)
 			)
 
-			var following_length: float = (
-				following.length()
+			var next_length: float = float(
+				maxi(
+					absi(next_delta.x),
+					absi(next_delta.y)
+				)
 			)
 
 			distance_to_corner += previous_length
 
 			if (
 				previous_length <= 0.0
-				or following_length <= 0.0
+				or next_length <= 0.0
+			):
+				continue
+
+			var before: Vector2 = (
+				grid.cell_to_local(path[i - 1])
+			)
+
+			var corner: Vector2 = (
+				grid.cell_to_local(path[i])
+			)
+
+			var after: Vector2 = (
+				grid.cell_to_local(path[i + 1])
+			)
+
+			var incoming_vector: Vector2 = (
+				corner - before
+			)
+
+			var outgoing_vector: Vector2 = (
+				after - corner
+			)
+
+			if (
+				incoming_vector.length_squared() < 0.0001
+				or outgoing_vector.length_squared() < 0.0001
 			):
 				continue
 
 			var incoming: Vector2 = (
-				previous / previous_length
+				incoming_vector.normalized()
 			)
 
 			var outgoing: Vector2 = (
-				following / following_length
+				outgoing_vector.normalized()
 			)
 
-			# No rounding on a straight segment
-			# or a complete reversal.
-			if absf(
+			var alignment: float = (
 				incoming.dot(outgoing)
-			) > 0.001:
+			)
+
+			if absf(alignment) > 0.999:
 				continue
 
 			var radius: float = minf(
 				corner_radius_cells,
 				minf(
-					previous_length * 0.45,
-					following_length * 0.45
+					previous_length * 0.35,
+					next_length * 0.35
 				)
 			)
+
+			if radius <= 0.001:
+				continue
 
 			var corner_start: float = (
 				distance_to_corner - radius
@@ -362,42 +413,45 @@ func get_visual_point(
 
 			var t: float = clampf(
 				(distance - corner_start)
-				/ (2.0 * radius),
+				/ (radius * 2.0),
 				0.0,
 				1.0
 			)
 
-			var corner: Vector2 = (
-				grid.cell_to_local(path[i])
+			var incoming_pixels: float = (
+				incoming_vector.length()
+				/ previous_length
 			)
 
-			var radius_pixels: float = (
-				radius * grid.cell_size
+			var outgoing_pixels: float = (
+				outgoing_vector.length()
+				/ next_length
 			)
 
-			var start_point: Vector2 = (
+			var curve_start: Vector2 = (
 				corner
-				- incoming * radius_pixels
+				- incoming * radius * incoming_pixels
 			)
 
-			var end_point: Vector2 = (
+			var curve_end: Vector2 = (
 				corner
-				+ outgoing * radius_pixels
+				+ outgoing * radius * outgoing_pixels
 			)
 
-			# Quadratic Bezier with the original
-			# sharp corner as the control point.
 			var inverse: float = 1.0 - t
 
 			return (
-				start_point * inverse * inverse
+				curve_start * inverse * inverse
 				+ corner * 2.0 * inverse * t
-				+ end_point * t * t
+				+ curve_end * t * t
 			)
 
-	# --------------------------------------------
-	# STRAIGHT PARTS OF PATH
-	# --------------------------------------------
+	# ====================================================
+	# STRAIGHT SEGMENTS
+	#
+	# For rhombus, every corner ends exactly
+	# at its grid vertex before turning.
+	# ====================================================
 
 	var travelled: float = 0.0
 
@@ -415,18 +469,21 @@ func get_visual_point(
 			path[i + 1] - path[i]
 		)
 
-		var length: float = float(maxi(
-			absi(difference.x),
-			absi(difference.y)
-		))
+		var segment_length: float = float(
+			maxi(
+				absi(difference.x),
+				absi(difference.y)
+			)
+		)
 
-		if length <= 0.0:
+		if segment_length <= 0.0:
 			continue
 
-		if distance <= travelled + length:
+		if distance <= travelled + segment_length:
 
 			var t: float = clampf(
-				(distance - travelled) / length,
+				(distance - travelled)
+				/ segment_length,
 				0.0,
 				1.0
 			)
@@ -436,16 +493,12 @@ func get_visual_point(
 				t
 			)
 
-		travelled += length
+		travelled += segment_length
 
 	return grid.cell_to_local(
 		path[path.size() - 1]
 	)
 
-
-# ============================================================
-# CONVERT VISUAL POINT TO THIS NODE'S SPACE
-# ============================================================
 
 func _visual_point_local(
 	path: Array[Vector2i],

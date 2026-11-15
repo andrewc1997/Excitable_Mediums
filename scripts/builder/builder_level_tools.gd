@@ -2,31 +2,13 @@
 extends Node
 
 # ============================================================
-# EXCITABLE MEDIUMS - BUILDER LEVEL TOOLS
+# EXCITABLE MEDIUMS - EM9 LEVEL TOOLS
 # Godot 4.3
-# Version: EM6
 #
-# Features:
-# - Square grid resizing
-# - Clear level
-# - Local save/load
-# - Offline share codes
-# - Import EM1 through EM6
-# - Begin Node validation
-# - One-Way Gate settings
-# - Repeater settings
-# - Existing node configuration
-#
-# EM6:
-# - Supports Begin Nodes (Kind 13)
-# - Maximum one Begin Node per level
-# - Connections cannot enter Begin Nodes
-# - Older levels remain importable
-# ============================================================
-
-
-# ============================================================
-# CONSTANTS
+# Square and X-stretched Rhombus
+# Real left-side rhombus terminal
+# Save / Load / Offline Share Codes
+# EM1-EM6 import compatibility
 # ============================================================
 
 const NODE_SCENE: PackedScene = preload(
@@ -34,61 +16,32 @@ const NODE_SCENE: PackedScene = preload(
 )
 
 const FORMAT_VERSION: int = 6
-
 const SAVE_PATH: String = "user://excitable_level.json"
 
 const MAX_GRID_SIZE: int = 40
 const MAX_NODES: int = 1600
 const MAX_CONNECTIONS: int = 3200
-
 const MAX_CODE_LENGTH: int = 30000
 const MAX_DECOMPRESSED_SIZE: int = 500000
 
-const PRESETS: Array[int] = [
-	3, 4, 6, 8, 12, 16
-]
-
-
-# ============================================================
-# REFERENCES
-# ============================================================
+const PRESETS: Array[int] = [3, 4, 6, 8, 12, 16]
 
 var builder: Node2D
 var grid: PuzzleGridBase
 var ui_layer: CanvasLayer
 
-
-# ============================================================
-# GRID UI
-# ============================================================
-
-
-# ============================================================
-# GRID UI
-# ============================================================
-
-# Grid type dropdown
 var grid_type_selector: OptionButton
 var selected_grid_type: String = "square"
 
-# Grid size controls
 var grid_size_label: Label
 var decrease_size_button: Button
 var increase_size_button: Button
-
 var current_size: int = 12
-
 var status_label: Label
-
-
-# ============================================================
-# CODE DIALOG UI
-# ============================================================
 
 var overlay: ColorRect
 var dialog_center: CenterContainer
 var dialog_panel: PanelContainer
-
 var code_field: TextEdit
 var dialog_title: Label
 var dialog_note: Label
@@ -99,12 +52,10 @@ var apply_button: Button
 var close_button: Button
 
 var dialog_mode: String = ""
-
 var clear_confirmation: ConfirmationDialog
 
-
 # ============================================================
-# READY
+# INITIALIZATION
 # ============================================================
 
 func _ready() -> void:
@@ -114,185 +65,112 @@ func _ready() -> void:
 func _initialize_level_tools() -> void:
 
 	builder = get_parent() as Node2D
-
 	grid = builder.get_node("Grid") as PuzzleGridBase
-
-	ui_layer = (
-		builder.get_node("CanvasLayer") as CanvasLayer
-	)
+	ui_layer = builder.get_node("CanvasLayer") as CanvasLayer
 
 	create_toolbar()
 	create_code_dialog()
 	create_clear_confirmation()
 
+	var live_grid := grid as SquarePuzzleGrid
+
+	if live_grid != null:
+
+		selected_grid_type = (
+			"rhombus" if live_grid.is_rhombus()
+			else "square"
+		)
+
+		grid_type_selector.select(
+			1 if live_grid.is_rhombus() else 0
+		)
+
 	apply_grid_size(12)
+
+	get_viewport().size_changed.connect(
+		centre_grid_camera
+	)
 
 	status_label.text = "Ready to build."
 
 
 # ============================================================
-# CREATE TOOLBAR
+# TOOLBAR
 # ============================================================
 
 func create_toolbar() -> void:
 
 	var panel := PanelContainer.new()
-
 	panel.name = "LevelToolbar"
-
 	ui_layer.add_child(panel)
 
 	panel.anchor_left = 0.0
 	panel.anchor_right = 1.0
-
 	panel.offset_left = 16.0
 	panel.offset_right = -16.0
-
-	panel.offset_top = 120.0
-	panel.offset_bottom = 200.0
+	panel.offset_top = 20.0
+	panel.offset_bottom = 105.0
 
 	var column := VBoxContainer.new()
-
 	panel.add_child(column)
 
 	var row := HBoxContainer.new()
-
-	row.add_theme_constant_override(
-		"separation",
-		10
-	)
-
+	row.add_theme_constant_override("separation", 8)
 	column.add_child(row)
-
-	# --------------------------------------------
-	# GRID TYPE
-	# --------------------------------------------
-
-
-	# ====================================================
-	# GRID TYPE SELECTOR
-	# ====================================================
 
 	grid_type_selector = OptionButton.new()
 	grid_type_selector.name = "GridTypeSelector"
-
 	grid_type_selector.custom_minimum_size = Vector2(190, 35)
 
 	grid_type_selector.add_item("Square Grid", 0)
 	grid_type_selector.add_item("Horizontal Rhombus", 1)
 	grid_type_selector.add_item("Honeycomb Grid", 2)
+	grid_type_selector.set_item_disabled(2, true)
 
 	grid_type_selector.select(0)
-
 	grid_type_selector.item_selected.connect(
 		_on_grid_type_selected
 	)
 
 	row.add_child(grid_type_selector)
 
-	# --------------------------------------------
-	# DECREASE GRID
-	# --------------------------------------------
-
 	decrease_size_button = Button.new()
-
 	decrease_size_button.text = "◀"
-
-	decrease_size_button.custom_minimum_size = (
-		Vector2(44, 35)
-	)
-
+	decrease_size_button.custom_minimum_size = Vector2(44, 35)
 	decrease_size_button.pressed.connect(
 		_on_decrease_grid_pressed
 	)
-
 	row.add_child(decrease_size_button)
 
-	# --------------------------------------------
-	# GRID SIZE LABEL
-	# --------------------------------------------
-
 	grid_size_label = Label.new()
-
-	grid_size_label.custom_minimum_size = (
-		Vector2(85, 35)
-	)
-
+	grid_size_label.custom_minimum_size = Vector2(85, 35)
 	grid_size_label.horizontal_alignment = (
 		HORIZONTAL_ALIGNMENT_CENTER
 	)
-
 	grid_size_label.vertical_alignment = (
 		VERTICAL_ALIGNMENT_CENTER
 	)
-
 	grid_size_label.add_theme_font_size_override(
-		"font_size",
-		23
+		"font_size", 23
 	)
-
 	row.add_child(grid_size_label)
 
-	# --------------------------------------------
-	# INCREASE GRID
-	# --------------------------------------------
-
 	increase_size_button = Button.new()
-
 	increase_size_button.text = "▶"
-
-	increase_size_button.custom_minimum_size = (
-		Vector2(44, 35)
-	)
-
+	increase_size_button.custom_minimum_size = Vector2(44, 35)
 	increase_size_button.pressed.connect(
 		_on_increase_grid_pressed
 	)
-
 	row.add_child(increase_size_button)
 
-	# --------------------------------------------
-	# TOOLBAR BUTTONS
-	# --------------------------------------------
-
-	add_toolbar_button(
-		row,
-		"Clear",
-		_on_clear_pressed
-	)
-
-	add_toolbar_button(
-		row,
-		"Save",
-		_on_save_pressed
-	)
-
-	add_toolbar_button(
-		row,
-		"Load",
-		_on_load_pressed
-	)
-
-	add_toolbar_button(
-		row,
-		"Share Code",
-		_on_export_pressed
-	)
-
-	add_toolbar_button(
-		row,
-		"Import Code",
-		_on_import_pressed
-	)
-
-	# --------------------------------------------
-	# STATUS
-	# --------------------------------------------
+	add_toolbar_button(row, "Clear", _on_clear_pressed)
+	add_toolbar_button(row, "Save", _on_save_pressed)
+	add_toolbar_button(row, "Load", _on_load_pressed)
+	add_toolbar_button(row, "Share Code", _on_export_pressed)
+	add_toolbar_button(row, "Import Code", _on_import_pressed)
 
 	status_label = Label.new()
-
 	status_label.text = "Ready."
-
 	column.add_child(status_label)
 
 	update_grid_size_label()
@@ -305,15 +183,63 @@ func add_toolbar_button(
 ) -> void:
 
 	var button := Button.new()
-
 	button.text = title
 	button.pressed.connect(callback)
-
 	row.add_child(button)
 
 
 # ============================================================
-# GRID SIZE CONTROLS
+# GRID TYPE
+# ============================================================
+
+func _on_grid_type_selected(index: int) -> void:
+
+	var live_grid := grid as SquarePuzzleGrid
+
+	if live_grid == null:
+		status_label.text = "Incorrect Grid script."
+		return
+
+	if index < 0 or index > 1:
+
+		grid_type_selector.select(live_grid.grid_type)
+		status_label.text = "Honeycomb not implemented."
+		return
+
+	if index == live_grid.grid_type:
+		return
+
+	if (
+		not builder.nodes_by_id.is_empty()
+		or not builder.connection_layer.connections.is_empty()
+	):
+
+		grid_type_selector.select(live_grid.grid_type)
+
+		status_label.text = (
+			"Clear the level before changing grid type."
+		)
+		return
+
+	live_grid.set_grid_type(index)
+
+	selected_grid_type = (
+		"rhombus" if index == 1 else "square"
+	)
+
+	live_grid.queue_redraw()
+	builder.connection_layer.refresh_connections()
+
+	centre_grid_camera()
+
+	status_label.text = (
+		"Grid changed to %s."
+		% grid_type_selector.get_item_text(index)
+	)
+
+
+# ============================================================
+# GRID RESIZING
 # ============================================================
 
 func _on_decrease_grid_pressed() -> void:
@@ -328,10 +254,7 @@ func _on_increase_grid_pressed() -> void:
 
 	var index: int = PRESETS.find(current_size)
 
-	if (
-		index >= 0
-		and index < PRESETS.size() - 1
-	):
+	if index >= 0 and index < PRESETS.size() - 1:
 		apply_grid_size(PRESETS[index + 1])
 
 
@@ -357,10 +280,6 @@ func update_grid_size_label() -> void:
 	)
 
 
-# ============================================================
-# APPLY GRID SIZE
-# ============================================================
-
 func apply_grid_size(size: int) -> void:
 
 	if not PRESETS.has(size):
@@ -368,6 +287,24 @@ func apply_grid_size(size: int) -> void:
 		if status_label != null:
 			status_label.text = "Unsupported grid size."
 
+		return
+
+	var live_grid := grid as SquarePuzzleGrid
+
+	# Terminal coordinates depend on grid height.
+	if (
+		live_grid != null
+		and live_grid.is_rhombus()
+		and not builder.nodes_by_id.is_empty()
+		and (
+			size != grid.grid_columns
+			or size != grid.grid_rows
+		)
+	):
+
+		status_label.text = (
+			"Clear the rhombus before resizing."
+		)
 		return
 
 	var old_columns: int = grid.grid_columns
@@ -380,12 +317,7 @@ func apply_grid_size(size: int) -> void:
 
 		update_grid_size_label()
 		centre_grid_camera()
-
 		return
-
-	# --------------------------------------------
-	# CHECK EXISTING NODES
-	# --------------------------------------------
 
 	for uid in builder.nodes_by_id.keys():
 
@@ -397,42 +329,34 @@ func apply_grid_size(size: int) -> void:
 		):
 
 			status_label.text = (
-				"Cannot shrink: a node is outside the grid."
+				"A node is outside the requested grid."
 			)
-
 			return
-
-	# --------------------------------------------
-	# APPLY DIMENSIONS
-	# --------------------------------------------
 
 	grid.grid_columns = size
 	grid.grid_rows = size
 
-	var new_paths: Array[Dictionary] = []
+	var proposed_paths: Array[Dictionary] = []
 
 	var valid: bool = builder.build_connection_paths(
 		builder.cells_to_ids,
 		{},
 		builder.connection_layer.connections,
-		new_paths
+		proposed_paths
 	)
 
 	if not valid:
 
 		grid.grid_columns = old_columns
 		grid.grid_rows = old_rows
-
 		grid.queue_redraw()
 
 		status_label.text = (
-			"Cannot resize: connections cannot fit."
+			"Connections cannot fit this grid."
 		)
-
 		return
 
-	builder.connection_layer.connections = new_paths
-
+	builder.connection_layer.connections = proposed_paths
 	builder.connection_layer.refresh_connections()
 
 	grid.queue_redraw()
@@ -441,72 +365,153 @@ func apply_grid_size(size: int) -> void:
 	centre_grid_camera()
 
 	status_label.text = (
-		"Grid resized to %dx%d."
-		% [size, size]
+		"Grid resized to %dx%d." % [size, size]
 	)
 
 
 # ============================================================
-# CENTRE GRID CAMERA
+# CAMERA FRAMING
 # ============================================================
 
 func centre_grid_camera() -> void:
 
-	var camera: Camera2D = (
-		builder.get_node("Camera2D") as Camera2D
+	if builder == null or grid == null:
+		return
+
+	var camera := (
+		builder.get_node_or_null("Camera2D")
+		as Camera2D
 	)
 
-	var grid_width: float = (
-		float(grid.grid_columns - 1)
-		* grid.cell_size
-	)
+	if camera == null:
+		return
 
-	var grid_height: float = (
-		float(grid.grid_rows - 1)
-		* grid.cell_size
-	)
+	var minimum := Vector2(INF, INF)
+	var maximum := Vector2(-INF, -INF)
 
-	var centre := Vector2(
-		grid_width / 2.0,
-		grid_height / 2.0
-	)
+	for x in range(grid.grid_columns):
+		for y in range(grid.grid_rows):
+
+			var cell := Vector2i(x, y)
+
+			if not grid.is_valid_cell(cell):
+				continue
+
+			var point: Vector2 = (
+				grid.cell_to_local(cell)
+			)
+
+			minimum.x = minf(minimum.x, point.x)
+			minimum.y = minf(minimum.y, point.y)
+			maximum.x = maxf(maximum.x, point.x)
+			maximum.y = maxf(maximum.y, point.y)
+
+	# Include the real rhombus terminal.
+	var live_grid := grid as SquarePuzzleGrid
+
+	if (
+		live_grid != null
+		and live_grid.is_rhombus()
+	):
+
+		var terminal_position: Vector2 = (
+			live_grid.cell_to_local(
+				live_grid.get_left_terminal()
+			)
+		)
+
+		minimum.x = minf(
+			minimum.x, terminal_position.x
+		)
+
+		minimum.y = minf(
+			minimum.y, terminal_position.y
+		)
+
+		maximum.x = maxf(
+			maximum.x, terminal_position.x
+		)
+
+		maximum.y = maxf(
+			maximum.y, terminal_position.y
+		)
+
+	if minimum.x == INF:
+		return
+
+	var grid_size: Vector2 = maximum - minimum
+
+	var grid_centre: Vector2 = (
+		minimum + maximum
+	) * 0.5
 
 	var viewport_size: Vector2 = (
 		get_viewport().get_visible_rect().size
 	)
 
+	var left_edge: float = 45.0
+	var top_edge: float = 135.0
+	var right_edge: float = viewport_size.x - 290.0
+	var bottom_edge: float = viewport_size.y - 150.0
+
+	var available_width: float = maxf(
+		100.0, right_edge - left_edge
+	)
+
+	var available_height: float = maxf(
+		100.0, bottom_edge - top_edge
+	)
+
+	var padding: float = 55.0
+
 	var zoom_x: float = (
-		viewport_size.x * 0.85
-		/ maxf(grid_width, 1.0)
+		available_width
+		/ maxf(grid_size.x + padding * 2.0, 1.0)
 	)
 
 	var zoom_y: float = (
-		viewport_size.y * 0.55
-		/ maxf(grid_height, 1.0)
+		available_height
+		/ maxf(grid_size.y + padding * 2.0, 1.0)
 	)
 
 	var zoom_value: float = clampf(
-		minf(zoom_x, zoom_y),
-		0.3,
-		2.5
+		minf(zoom_x, zoom_y), 0.1, 2.5
 	)
 
 	camera.zoom = Vector2.ONE * zoom_value
 
-	camera.global_position = (
-		grid.to_global(centre)
-		- Vector2(0.0, 70.0 / zoom_value)
+	var target_screen_position := Vector2(
+		left_edge + available_width * 0.5,
+		top_edge
+			+ padding * zoom_value
+			+ grid_size.y * zoom_value * 0.5
 	)
+
+	var viewport_centre: Vector2 = (
+		viewport_size * 0.5
+	)
+
+	camera.global_position = (
+		grid.to_global(grid_centre)
+		+ (
+			viewport_centre - target_screen_position
+		) / zoom_value
+	)
+
+	camera.make_current()
+	camera.reset_smoothing()
+
+	grid.queue_redraw()
+	builder.connection_layer.refresh_connections()
 
 
 # ============================================================
-# CLEAR LEVEL CONFIRMATION
+# CLEAR LEVEL
 # ============================================================
 
 func create_clear_confirmation() -> void:
 
 	clear_confirmation = ConfirmationDialog.new()
-
 	clear_confirmation.title = "Clear Level"
 
 	clear_confirmation.dialog_text = (
@@ -528,66 +533,45 @@ func _on_clear_pressed() -> void:
 func _confirm_clear_level() -> void:
 
 	clear_level()
-
 	status_label.text = "Level cleared."
 
-
-# ============================================================
-# CLEAR LEVEL
-# ============================================================
 
 func clear_level() -> void:
 
 	builder.connection_start_id = ""
 	builder.dragging_node_id = ""
-
 	builder.cancel_palette_drag()
 
 	builder.connection_layer.connections.clear()
-
 	builder.connection_layer.refresh_connections()
 
 	for node in builder.placed_nodes.get_children():
 
 		builder.placed_nodes.remove_child(node)
-
 		node.queue_free()
 
 	builder.nodes_by_id.clear()
 	builder.cells_to_ids.clear()
 
 	builder.next_node_number = 1
-
 	builder.selected_node_id = ""
 
 	if builder.builder_ui != null:
-
 		builder.builder_ui.show_selected_node("")
 
 	builder.update_tool_label()
 
 
 # ============================================================
-# CREATE SHARE / IMPORT DIALOG
+# CODE DIALOG
 # ============================================================
 
 func create_code_dialog() -> void:
 
 	overlay = ColorRect.new()
-
 	overlay.name = "CodeOverlay"
-
-	overlay.color = Color(
-		0.0,
-		0.0,
-		0.0,
-		0.78
-	)
-
-	overlay.mouse_filter = (
-		Control.MOUSE_FILTER_STOP
-	)
-
+	overlay.color = Color(0.0, 0.0, 0.0, 0.78)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	overlay.z_index = 100
 
 	ui_layer.add_child(overlay)
@@ -597,7 +581,6 @@ func create_code_dialog() -> void:
 	)
 
 	dialog_center = CenterContainer.new()
-
 	dialog_center.name = "DialogCenter"
 
 	overlay.add_child(dialog_center)
@@ -607,7 +590,6 @@ func create_code_dialog() -> void:
 	)
 
 	dialog_panel = PanelContainer.new()
-
 	dialog_panel.name = "LevelCodePanel"
 
 	dialog_panel.custom_minimum_size = (
@@ -616,53 +598,33 @@ func create_code_dialog() -> void:
 
 	dialog_center.add_child(dialog_panel)
 
-	# --------------------------------------------
-	# MARGINS
-	# --------------------------------------------
-
 	var margin := MarginContainer.new()
 
-	margin.add_theme_constant_override(
+	for side in [
 		"margin_left",
-		20
-	)
-
-	margin.add_theme_constant_override(
 		"margin_right",
-		20
-	)
-
-	margin.add_theme_constant_override(
 		"margin_top",
-		18
-	)
+		"margin_bottom"
+	]:
 
-	margin.add_theme_constant_override(
-		"margin_bottom",
-		18
-	)
+		margin.add_theme_constant_override(
+			side, 20
+		)
 
 	dialog_panel.add_child(margin)
 
 	var column := VBoxContainer.new()
 
 	column.add_theme_constant_override(
-		"separation",
-		12
+		"separation", 12
 	)
 
 	margin.add_child(column)
 
-	# --------------------------------------------
-	# TITLE
-	# --------------------------------------------
-
 	var title_row := HBoxContainer.new()
-
 	column.add_child(title_row)
 
 	dialog_title = Label.new()
-
 	dialog_title.text = "Share Level Code"
 
 	dialog_title.size_flags_horizontal = (
@@ -670,43 +632,22 @@ func create_code_dialog() -> void:
 	)
 
 	dialog_title.add_theme_font_size_override(
-		"font_size",
-		22
+		"font_size", 22
 	)
 
 	title_row.add_child(dialog_title)
 
 	var title_close := Button.new()
-
 	title_close.text = "✕"
-
-	title_close.pressed.connect(
-		_close_dialog
-	)
-
+	title_close.pressed.connect(_close_dialog)
 	title_row.add_child(title_close)
 
-	# --------------------------------------------
-	# DESCRIPTION
-	# --------------------------------------------
-
 	var description := Label.new()
-
-	description.text = (
-		"Offline level password — no internet required."
-	)
-
+	description.text = "Offline code — no internet required."
 	column.add_child(description)
 
-	# --------------------------------------------
-	# CODE FIELD
-	# --------------------------------------------
-
 	code_field = TextEdit.new()
-
-	code_field.custom_minimum_size = (
-		Vector2(620, 240)
-	)
+	code_field.custom_minimum_size = Vector2(620, 240)
 
 	code_field.size_flags_horizontal = (
 		Control.SIZE_EXPAND_FILL
@@ -722,10 +663,6 @@ func create_code_dialog() -> void:
 
 	column.add_child(code_field)
 
-	# --------------------------------------------
-	# STATUS MESSAGE
-	# --------------------------------------------
-
 	dialog_note = Label.new()
 
 	dialog_note.autowrap_mode = (
@@ -734,77 +671,36 @@ func create_code_dialog() -> void:
 
 	column.add_child(dialog_note)
 
-	# --------------------------------------------
-	# BUTTON ROW
-	# --------------------------------------------
-
 	var button_row := HBoxContainer.new()
 
 	button_row.alignment = (
 		BoxContainer.ALIGNMENT_END
 	)
 
-	button_row.add_theme_constant_override(
-		"separation",
-		10
-	)
-
 	column.add_child(button_row)
 
 	copy_button = Button.new()
-
 	copy_button.text = "Copy Code"
-
-	copy_button.custom_minimum_size.x = 115.0
-
-	copy_button.pressed.connect(
-		_copy_code
-	)
-
+	copy_button.pressed.connect(_copy_code)
 	button_row.add_child(copy_button)
 
 	paste_button = Button.new()
-
 	paste_button.text = "Paste Code"
-
-	paste_button.custom_minimum_size.x = 115.0
-
-	paste_button.pressed.connect(
-		_paste_code
-	)
-
+	paste_button.pressed.connect(_paste_code)
 	button_row.add_child(paste_button)
 
 	apply_button = Button.new()
-
 	apply_button.text = "Import Level"
-
-	apply_button.custom_minimum_size.x = 115.0
-
-	apply_button.pressed.connect(
-		_apply_import
-	)
-
+	apply_button.pressed.connect(_apply_import)
 	button_row.add_child(apply_button)
 
 	close_button = Button.new()
-
 	close_button.text = "Close"
-
-	close_button.custom_minimum_size.x = 100.0
-
-	close_button.pressed.connect(
-		_close_dialog
-	)
-
+	close_button.pressed.connect(_close_dialog)
 	button_row.add_child(close_button)
 
 	overlay.hide()
 
-
-# ============================================================
-# OPEN CODE DIALOG
-# ============================================================
 
 func open_code_dialog(
 	mode: String,
@@ -816,21 +712,13 @@ func open_code_dialog(
 
 	if mode == "export":
 
-		dialog_title.text = (
-			"Share Level Code — EM6"
-		)
-
+		dialog_title.text = "Share Level Code — EM6"
 		code_field.editable = false
 		code_field.text = export_code
 
 		copy_button.show()
-
 		paste_button.hide()
 		apply_button.hide()
-
-		dialog_note.text = (
-			"Copy this password to share the level."
-		)
 
 	else:
 
@@ -842,18 +730,11 @@ func open_code_dialog(
 		code_field.text = ""
 
 		copy_button.hide()
-
 		paste_button.show()
 		apply_button.show()
 
-		dialog_note.text = (
-			"Paste a password and select Import Level."
-		)
-
 	overlay.move_to_front()
 	overlay.show()
-
-	dialog_center.queue_sort()
 
 	if mode == "import":
 		code_field.grab_focus()
@@ -864,9 +745,7 @@ func open_code_dialog(
 func _close_dialog() -> void:
 
 	overlay.hide()
-
 	dialog_mode = ""
-
 	code_field.release_focus()
 
 	status_label.text = "Builder Ready."
@@ -885,27 +764,17 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	):
 
 		_close_dialog()
-
 		get_viewport().set_input_as_handled()
 
-
-# ============================================================
-# COPY / PASTE
-# ============================================================
 
 func _copy_code() -> void:
 
 	if code_field.text.is_empty():
-
 		dialog_note.text = "No code to copy."
-
 		return
 
-	DisplayServer.clipboard_set(
-		code_field.text
-	)
-
-	dialog_note.text = "Level password copied."
+	DisplayServer.clipboard_set(code_field.text)
+	dialog_note.text = "Level code copied."
 
 
 func _paste_code() -> void:
@@ -917,11 +786,11 @@ func _paste_code() -> void:
 		DisplayServer.clipboard_get().strip_edges()
 	)
 
-	dialog_note.text = "Password pasted."
+	dialog_note.text = "Code pasted."
 
 
 # ============================================================
-# EXPORT LEVEL DATA
+# EXPORT
 # ============================================================
 
 func export_level_data() -> Dictionary:
@@ -930,12 +799,7 @@ func export_level_data() -> Dictionary:
 	var level_connections: Array = []
 
 	var ids: Array = builder.nodes_by_id.keys()
-
 	ids.sort()
-
-	# --------------------------------------------
-	# EXPORT NODES
-	# --------------------------------------------
 
 	for uid in ids:
 
@@ -961,20 +825,12 @@ func export_level_data() -> Dictionary:
 			"one_way_direction": int(node.one_way_direction)
 		})
 
-	# --------------------------------------------
-	# EXPORT CONNECTIONS
-	# --------------------------------------------
-
 	for connection in builder.connection_layer.connections:
 
 		var path_data: Array = []
 
 		for cell in connection["path"]:
-
-			path_data.append([
-				cell.x,
-				cell.y
-			])
+			path_data.append([cell.x, cell.y])
 
 		level_connections.append({
 			"from": str(connection["from_uid"]),
@@ -986,7 +842,7 @@ func export_level_data() -> Dictionary:
 
 	return {
 		"version": FORMAT_VERSION,
-		"grid_type": "square",
+		"grid_type": selected_grid_type,
 		"columns": grid.grid_columns,
 		"rows": grid.grid_rows,
 		"nodes": level_nodes,
@@ -995,7 +851,7 @@ func export_level_data() -> Dictionary:
 
 
 # ============================================================
-# ENCODE LEVEL
+# OFFLINE CODE
 # ============================================================
 
 func encode_level(data: Dictionary) -> String:
@@ -1027,102 +883,52 @@ func encode_level(data: Dictionary) -> String:
 	)
 
 	return "EM%d-%s-%s" % [
-		version,
-		checksum,
-		payload
+		version, checksum, payload
 	]
 
-
-# ============================================================
-# DECODE LEVEL
-# ============================================================
 
 func decode_level(code: String) -> Dictionary:
 
 	var clean: String = code.strip_edges()
 
-	for whitespace in [
-		" ",
-		"\n",
-		"\r",
-		"\t"
-	]:
-
+	for whitespace in [" ", "\n", "\r", "\t"]:
 		clean = clean.replace(whitespace, "")
 
 	if clean.length() > MAX_CODE_LENGTH:
-		return {
-			"error": "Password is too long."
-		}
+		return {"error": "Code too long."}
 
 	var parts: PackedStringArray = (
 		clean.split("-", false, 2)
 	)
 
 	if parts.size() != 3:
-		return {
-			"error": "Invalid password format."
-		}
-
-	# --------------------------------------------
-	# VERSION
-	# --------------------------------------------
+		return {"error": "Invalid code format."}
 
 	var version: int = -1
 
 	match parts[0]:
-
-		"EM1":
-			version = 1
-
-		"EM2":
-			version = 2
-
-		"EM3":
-			version = 3
-
-		"EM4":
-			version = 4
-
-		"EM5":
-			version = 5
-
-		"EM6":
-			version = 6
-
+		"EM1": version = 1
+		"EM2": version = 2
+		"EM3": version = 3
+		"EM4": version = 4
+		"EM5": version = 5
+		"EM6": version = 6
 		_:
-			return {
-				"error": "Unsupported password version."
-			}
+			return {"error": "Unsupported code version."}
 
 	var payload: String = parts[2]
 
-	if (
-		parts[1].length() != 10
-		or payload.is_empty()
-	):
-		return {
-			"error": "Invalid password data."
-		}
+	if parts[1].length() != 10 or payload.is_empty():
+		return {"error": "Invalid code data."}
 
-	# --------------------------------------------
-	# CHECKSUM
-	# --------------------------------------------
-
-	if (
+	var checksum: String = (
 		payload.sha256_text()
 		.substr(0, 10)
 		.to_upper()
-		!= parts[1].to_upper()
-	):
+	)
 
-		return {
-			"error": "Incorrect password checksum."
-		}
-
-	# --------------------------------------------
-	# BASE64 RESTORATION
-	# --------------------------------------------
+	if checksum != parts[1].to_upper():
+		return {"error": "Incorrect code checksum."}
 
 	var base64: String = (
 		payload.replace("-", "+").replace("_", "/")
@@ -1136,13 +942,7 @@ func decode_level(code: String) -> Dictionary:
 	)
 
 	if compressed.is_empty():
-		return {
-			"error": "Invalid encoded data."
-		}
-
-	# --------------------------------------------
-	# DECOMPRESS
-	# --------------------------------------------
+		return {"error": "Invalid encoded data."}
 
 	var decoded: PackedByteArray = (
 		compressed.decompress_dynamic(
@@ -1152,13 +952,7 @@ func decode_level(code: String) -> Dictionary:
 	)
 
 	if decoded.is_empty():
-		return {
-			"error": "Cannot decompress level."
-		}
-
-	# --------------------------------------------
-	# PARSE JSON
-	# --------------------------------------------
+		return {"error": "Cannot decompress level."}
 
 	var parser := JSON.new()
 
@@ -1166,36 +960,22 @@ func decode_level(code: String) -> Dictionary:
 		decoded.get_string_from_utf8()
 	) != OK:
 
-		return {
-			"error": "Invalid level JSON."
-		}
+		return {"error": "Invalid level JSON."}
 
 	if not (parser.data is Dictionary):
-		return {
-			"error": "Invalid level structure."
-		}
+		return {"error": "Invalid level structure."}
 
 	var data: Dictionary = parser.data
 
 	if int(data.get("version", -1)) != version:
+		return {"error": "Code version mismatch."}
 
-		return {
-			"error": "Password version mismatch."
-		}
-
-	var validation_error: String = (
-		validate_level(data)
-	)
+	var validation_error: String = validate_level(data)
 
 	if not validation_error.is_empty():
+		return {"error": validation_error}
 
-		return {
-			"error": validation_error
-		}
-
-	return {
-		"data": data
-	}
+	return {"data": data}
 
 
 # ============================================================
@@ -1208,10 +988,7 @@ func _valid_int(
 	maximum: int
 ) -> bool:
 
-	if not (
-		value is int
-		or value is float
-	):
+	if not (value is int or value is float):
 		return false
 
 	var number: float = float(value)
@@ -1227,7 +1004,8 @@ func _valid_int(
 func _valid_cell_data(
 	value: Variant,
 	columns: int,
-	rows: int
+	rows: int,
+	grid_name: String = "square"
 ) -> bool:
 
 	if not (value is Array):
@@ -1236,10 +1014,19 @@ func _valid_cell_data(
 	if value.size() != 2:
 		return false
 
-	return (
-		_valid_int(value[0], 0, columns - 1)
-		and _valid_int(value[1], 0, rows - 1)
-	)
+	if not _valid_int(value[0], -1, columns - 1):
+		return false
+
+	if not _valid_int(value[1], 0, rows - 1):
+		return false
+
+	var x: int = int(value[0])
+	var y: int = int(value[1])
+
+	if grid_name == "rhombus" and x == -1:
+		return y == rows - 1
+
+	return x >= 0 and x < columns
 
 
 # ============================================================
@@ -1248,34 +1035,30 @@ func _valid_cell_data(
 
 func validate_level(data: Dictionary) -> String:
 
-	# --------------------------------------------
-	# FORMAT VERSION
-	# --------------------------------------------
-
 	if not _valid_int(
 		data.get("version", -1),
 		1,
 		FORMAT_VERSION
 	):
-
-		return "Unsupported level format."
+		return "Unsupported level version."
 
 	var version: int = int(data["version"])
 
-	# --------------------------------------------
-	# GRID
-	# --------------------------------------------
+	var saved_type: String = str(
+		data.get("grid_type", "square")
+	)
 
-	if data.get("grid_type", "") != "square":
-
-		return "Only square grids are supported."
+	if (
+		saved_type != "square"
+		and saved_type != "rhombus"
+	):
+		return "Unsupported grid type."
 
 	if not _valid_int(
 		data.get("columns", null),
 		3,
 		MAX_GRID_SIZE
 	):
-
 		return "Invalid grid width."
 
 	if not _valid_int(
@@ -1283,15 +1066,10 @@ func validate_level(data: Dictionary) -> String:
 		3,
 		MAX_GRID_SIZE
 	):
-
 		return "Invalid grid height."
 
 	var columns: int = int(data["columns"])
 	var rows: int = int(data["rows"])
-
-	# --------------------------------------------
-	# NODE / CONNECTION ARRAYS
-	# --------------------------------------------
 
 	var nodes_data: Variant = (
 		data.get("nodes", null)
@@ -1315,22 +1093,20 @@ func validate_level(data: Dictionary) -> String:
 
 	var ids: Dictionary = {}
 	var occupied: Dictionary = {}
-
-	var begin_count: int = 0
 	var begin_ids: Dictionary = {}
 
-	# --------------------------------------------
-	# VALIDATE ALL NODES
-	# --------------------------------------------
+	var begin_count: int = 0
+
+	# ----------------------------------------------------
+	# NODES
+	# ----------------------------------------------------
 
 	for entry in nodes_data:
 
 		if not (entry is Dictionary):
 			return "Invalid node record."
 
-		var uid_value: Variant = (
-			entry.get("id", null)
-		)
+		var uid_value: Variant = entry.get("id", null)
 
 		if not (uid_value is String):
 			return "Invalid node ID."
@@ -1343,10 +1119,10 @@ func validate_level(data: Dictionary) -> String:
 		if not _valid_cell_data(
 			entry.get("cell", null),
 			columns,
-			rows
+			rows,
+			saved_type
 		):
-
-			return "Invalid node coordinates."
+			return "Invalid node position."
 
 		var cell := Vector2i(
 			int(entry["cell"][0]),
@@ -1354,16 +1130,11 @@ func validate_level(data: Dictionary) -> String:
 		)
 
 		if occupied.has(cell):
+			return "Two nodes share the same cell."
 
-			return (
-				"Two nodes occupy the same cell."
-			)
-
-		# ----------------------------------------
-		# ALLOWED NODE TYPES PER VERSION
-		# ----------------------------------------
-
-		var max_kind: int = 3
+		var max_kind: int = (
+			PuzzleNode.Kind.TARGET
+		)
 
 		match version:
 
@@ -1390,130 +1161,77 @@ func validate_level(data: Dictionary) -> String:
 			0,
 			max_kind
 		):
-
 			return "Unknown node type."
 
-		# ----------------------------------------
-		# COMMON CONFIGURATION
-		# ----------------------------------------
-
 		if not _valid_int(
-			entry.get("cap", null),
-			1,
-			100
+			entry.get("cap", null), 1, 100
 		):
-
 			return "Invalid activation cap."
 
 		if not _valid_int(
-			entry.get("refractory", null),
-			0,
-			100
+			entry.get("refractory", null), 0, 100
 		):
-
 			return "Invalid refractory period."
 
 		if not _valid_int(
-			entry.get("inputs", null),
-			1,
-			6
+			entry.get("inputs", null), 1, 6
 		):
-
 			return "Invalid splitter input count."
 
 		if not _valid_int(
-			entry.get("outputs", null),
-			1,
-			6
+			entry.get("outputs", null), 1, 6
 		):
-
 			return "Invalid splitter output count."
-
-		# ----------------------------------------
-		# EM2 SETTINGS
-		# ----------------------------------------
 
 		if version >= 2:
 
 			if not _valid_int(
 				entry.get("blocker_hits", null),
-				1,
-				100
+				1, 100
 			):
-
 				return "Invalid blocker amount."
 
 			if not _valid_int(
 				entry.get("gate_passes", null),
-				1,
-				100
+				1, 100
 			):
-
 				return "Invalid gate allowance."
 
 			if not _valid_int(
 				entry.get("channel", null),
-				0,
-				3
+				0, 3
 			):
-
 				return "Invalid colour channel."
-
-		# ----------------------------------------
-		# EM3 SETTINGS
-		# ----------------------------------------
 
 		if version >= 3:
 
 			if not _valid_int(
 				entry.get("delay_ticks", null),
-				1,
-				100
+				1, 100
 			):
-
 				return "Invalid Delay duration."
-
-		# ----------------------------------------
-		# EM4 SETTINGS
-		# ----------------------------------------
 
 		if version >= 4:
 
 			if not _valid_int(
 				entry.get("repeat_count", null),
-				1,
-				100
+				1, 100
 			):
-
-				return "Invalid Repeater pulse count."
+				return "Invalid Repeater count."
 
 			if not _valid_int(
 				entry.get("repeat_interval", null),
-				1,
-				100
+				1, 100
 			):
-
 				return "Invalid Repeater interval."
-
-		# ----------------------------------------
-		# EM5 SETTINGS
-		# ----------------------------------------
 
 		if version >= 5:
 
 			if not _valid_int(
 				entry.get("one_way_direction", null),
-				0,
-				3
+				0, 3
 			):
-
-				return (
-					"Invalid One-Way Gate direction."
-				)
-
-		# ----------------------------------------
-		# EM6 BEGIN NODE VALIDATION
-		# ----------------------------------------
+				return "Invalid One-Way direction."
 
 		if int(entry["kind"]) == PuzzleNode.Kind.BEGIN:
 
@@ -1521,28 +1239,14 @@ func validate_level(data: Dictionary) -> String:
 			begin_ids[uid] = true
 
 			if begin_count > 1:
-
-				return (
-					"A level may contain only one Begin Node."
-				)
-
-		# ----------------------------------------
-		# REGISTER NODE
-		# ----------------------------------------
+				return "Only one Begin Node is permitted."
 
 		ids[uid] = cell
 		occupied[cell] = uid
 
-	# Important:
-	# Existing builder levels without Begin remain
-	# valid for editing and importing.
-	#
-	# TestLevel enforces exactly one Begin when
-	# launching a simulation.
-
-	# --------------------------------------------
-	# CONNECTION VALIDATION
-	# --------------------------------------------
+	# ----------------------------------------------------
+	# CONNECTIONS
+	# ----------------------------------------------------
 
 	var seen_edges: Dictionary = {}
 	var reserved: Dictionary = {}
@@ -1552,20 +1256,14 @@ func validate_level(data: Dictionary) -> String:
 		if not (entry is Dictionary):
 			return "Invalid connection record."
 
-		var from_value: Variant = (
-			entry.get("from", null)
-		)
-
-		var to_value: Variant = (
-			entry.get("to", null)
-		)
+		var from_value: Variant = entry.get("from", null)
+		var to_value: Variant = entry.get("to", null)
 
 		if not (
 			from_value is String
 			and to_value is String
 		):
-
-			return "Invalid connection node IDs."
+			return "Invalid connection IDs."
 
 		var from_id: String = str(from_value)
 		var to_id: String = str(to_value)
@@ -1574,70 +1272,38 @@ func validate_level(data: Dictionary) -> String:
 			not ids.has(from_id)
 			or not ids.has(to_id)
 		):
-
-			return (
-				"Connection references a missing node."
-			)
+			return "Connection references a missing node."
 
 		if from_id == to_id:
-
-			return "Self-connections are not allowed."
-
-		# ========================================
-		# EM6 BEGIN CONNECTION RULE
-		#
-		# This check belongs inside validate_level.
-		#
-		# A Begin Node may send signals outward,
-		# but no connection may terminate at Begin.
-		# ========================================
+			return "Self-connections are not permitted."
 
 		if begin_ids.has(to_id):
+			return "Cannot connect into a Begin Node."
 
-			return (
-				"Begin Nodes cannot have incoming connections."
-			)
+		var pair: Array = [from_id, to_id]
+		pair.sort()
 
-		# ----------------------------------------
-		# DUPLICATE CONNECTIONS
-		# ----------------------------------------
-
-		var edge_ids: Array = [
-			from_id,
-			to_id
-		]
-
-		edge_ids.sort()
-
-		var edge_key: String = "%s|%s" % [
-			edge_ids[0],
-			edge_ids[1]
-		]
+		var edge_key: String = (
+			"%s|%s" % [pair[0], pair[1]]
+		)
 
 		if seen_edges.has(edge_key):
-
 			return "Duplicate connection."
 
 		seen_edges[edge_key] = true
 
-		# ----------------------------------------
-		# PATH DATA
-		# ----------------------------------------
-
-		var path_data: Variant = (
-			entry.get("path", null)
+		var path_data: Variant = entry.get(
+			"path", null
 		)
 
 		if not (path_data is Array):
-
 			return "Missing connection path."
 
 		if (
 			path_data.size() < 2
-			or path_data.size() > columns * rows
+			or path_data.size() > columns * rows + 1
 		):
-
-			return "Unsupported connection path."
+			return "Invalid connection path length."
 
 		var path: Array[Vector2i] = []
 
@@ -1646,9 +1312,9 @@ func validate_level(data: Dictionary) -> String:
 			if not _valid_cell_data(
 				point,
 				columns,
-				rows
+				rows,
+				saved_type
 			):
-
 				return "Invalid path coordinate."
 
 			path.append(
@@ -1658,51 +1324,30 @@ func validate_level(data: Dictionary) -> String:
 				)
 			)
 
-		# ----------------------------------------
-		# ENDPOINTS
-		# ----------------------------------------
-
 		if path[0] != ids[from_id]:
-
-			return (
-				"Connection start does not match node."
-			)
+			return "Connection start does not match node."
 
 		if path[path.size() - 1] != ids[to_id]:
-
-			return (
-				"Connection end does not match node."
-			)
-
-		# ----------------------------------------
-		# CHECK EACH PATH SEGMENT
-		# ----------------------------------------
+			return "Connection end does not match node."
 
 		var path_cells: Dictionary = {}
 
-		for segment_index in range(
-			path.size() - 1
-		):
+		for index in range(path.size() - 1):
 
-			var start_cell: Vector2i = (
-				path[segment_index]
-			)
-
-			var end_cell: Vector2i = (
-				path[segment_index + 1]
-			)
+			var start_cell: Vector2i = path[index]
+			var end_cell: Vector2i = path[index + 1]
 
 			var difference: Vector2i = (
 				end_cell - start_cell
 			)
 
-			# Square-grid routing is orthogonal.
+			# One logical lattice direction per
+			# segment, no hidden diagonal jumps.
 			if (
 				difference.x != 0
 				and difference.y != 0
 			):
-
-				return "Diagonal connection detected."
+				return "Path leaves the visible lattice."
 
 			var distance: int = maxi(
 				absi(difference.x),
@@ -1710,36 +1355,54 @@ func validate_level(data: Dictionary) -> String:
 			)
 
 			if distance == 0:
+				return "Zero-length path segment."
 
-				return (
-					"Zero-length connection segment."
-				)
+			# Terminal can only connect to anchor.
+			if saved_type == "rhombus":
+
+				var terminal := Vector2i(-1, rows - 1)
+				var anchor := Vector2i(0, rows - 1)
+
+				if (
+					start_cell == terminal
+					or end_cell == terminal
+				):
+
+					if not (
+						(
+							start_cell == terminal
+							and end_cell == anchor
+						)
+						or (
+							start_cell == anchor
+							and end_cell == terminal
+						)
+					):
+						return "Invalid rhombus terminal path."
 
 			var direction := Vector2i(
 				signi(difference.x),
 				signi(difference.y)
 			)
 
-			# ------------------------------------
-			# CHECK ALL CELLS IN SEGMENT
-			# ------------------------------------
-
 			for step in range(distance + 1):
 
 				var cell: Vector2i = (
-					start_cell
-					+ direction * step
+					start_cell + direction * step
 				)
 
-				if (
-					segment_index > 0
-					and step == 0
-				):
-
+				if index > 0 and step == 0:
 					continue
 
-				if path_cells.has(cell):
+				if not _valid_cell_data(
+					[cell.x, cell.y],
+					columns,
+					rows,
+					saved_type
+				):
+					return "Path leaves the grid."
 
+				if path_cells.has(cell):
 					return "Connection crosses itself."
 
 				path_cells[cell] = true
@@ -1748,24 +1411,13 @@ func validate_level(data: Dictionary) -> String:
 					cell == path[0]
 					or cell == path[path.size() - 1]
 				):
-
 					continue
 
 				if occupied.has(cell):
-
-					return (
-						"Connection passes through a node."
-					)
+					return "Connection crosses a node."
 
 				if reserved.has(cell):
-
-					return (
-						"Connections overlap or cross."
-					)
-
-		# ----------------------------------------
-		# RESERVE CONNECTION CELLS
-		# ----------------------------------------
+					return "Connections overlap."
 
 		for cell in path_cells.keys():
 
@@ -1773,7 +1425,6 @@ func validate_level(data: Dictionary) -> String:
 				cell == path[0]
 				or cell == path[path.size() - 1]
 			):
-
 				continue
 
 			reserved[cell] = true
@@ -1789,18 +1440,27 @@ func apply_level_data(data: Dictionary) -> void:
 
 	clear_level()
 
-	# --------------------------------------------
-	# GRID SIZE
-	# --------------------------------------------
+	var saved_type: String = str(
+		data.get("grid_type", "square")
+	)
+
+	var live_grid := grid as SquarePuzzleGrid
+
+	if live_grid != null:
+
+		if saved_type == "rhombus":
+			live_grid.set_grid_type(1)
+			grid_type_selector.select(1)
+
+		else:
+			live_grid.set_grid_type(0)
+			grid_type_selector.select(0)
+
+	selected_grid_type = saved_type
 
 	grid.grid_columns = int(data["columns"])
 	grid.grid_rows = int(data["rows"])
-
 	grid.queue_redraw()
-
-	# --------------------------------------------
-	# RECREATE NODES
-	# --------------------------------------------
 
 	for entry in data["nodes"]:
 
@@ -1814,26 +1474,15 @@ func apply_level_data(data: Dictionary) -> void:
 		)
 
 		node.node_uid = str(entry["id"])
-
 		node.grid_cell = cell
-
 		node.kind = int(entry["kind"])
 
-		node.activation_cap = int(
-			entry["cap"]
-		)
-
+		node.activation_cap = int(entry["cap"])
 		node.refractory_ticks = int(
 			entry["refractory"]
 		)
-
-		node.required_inputs = int(
-			entry["inputs"]
-		)
-
-		node.output_count = int(
-			entry["outputs"]
-		)
+		node.required_inputs = int(entry["inputs"])
+		node.output_count = int(entry["outputs"])
 
 		node.blocker_hits = int(
 			entry.get("blocker_hits", 2)
@@ -1871,10 +1520,6 @@ func apply_level_data(data: Dictionary) -> void:
 
 		node.linked_target_uid = ""
 
-		# ----------------------------------------
-		# ADD TO SCENE
-		# ----------------------------------------
-
 		builder.placed_nodes.add_child(node)
 
 		node.position = (
@@ -1886,14 +1531,9 @@ func apply_level_data(data: Dictionary) -> void:
 		)
 
 		builder.nodes_by_id[node.node_uid] = node
-
 		builder.cells_to_ids[cell] = node.node_uid
 
 		node.refresh_visuals()
-
-	# --------------------------------------------
-	# RECREATE CONNECTIONS
-	# --------------------------------------------
 
 	for entry in data["connections"]:
 
@@ -1914,8 +1554,7 @@ func apply_level_data(data: Dictionary) -> void:
 			"from_uid": str(entry["from"]),
 			"to_uid": str(entry["to"]),
 			"from_port": grid.get_port_direction(
-				path[0],
-				path[1]
+				path[0], path[1]
 			),
 			"to_port": grid.get_port_direction(
 				path[last],
@@ -1923,10 +1562,6 @@ func apply_level_data(data: Dictionary) -> void:
 			),
 			"path": path
 		})
-
-	# --------------------------------------------
-	# RESTORE NODE ID COUNTER
-	# --------------------------------------------
 
 	var next_number: int = 1
 
@@ -1949,169 +1584,112 @@ func apply_level_data(data: Dictionary) -> void:
 
 	builder.next_node_number = next_number
 
-	# --------------------------------------------
-	# REFRESH BUILDER
-	# --------------------------------------------
-
 	builder.connection_layer.refresh_connections()
 
 	update_grid_size_label()
 	centre_grid_camera()
 
 	if builder.builder_ui != null:
-
 		builder.builder_ui.show_selected_node("")
 
 
 # ============================================================
-# SAVE LEVEL LOCALLY
+# LOCAL SAVE
 # ============================================================
 
 func _on_save_pressed() -> void:
 
 	var data: Dictionary = export_level_data()
-
 	var error: String = validate_level(data)
 
 	if not error.is_empty():
-
-		status_label.text = (
-			"Save failed: " + error
-		)
-
+		status_label.text = "Save failed: " + error
 		return
 
 	var file: FileAccess = FileAccess.open(
-		SAVE_PATH,
-		FileAccess.WRITE
+		SAVE_PATH, FileAccess.WRITE
 	)
 
 	if file == null:
-
-		status_label.text = (
-			"Could not open save file."
-		)
-
+		status_label.text = "Could not open save file."
 		return
 
-	file.store_string(
-		JSON.stringify(data)
-	)
-
+	file.store_string(JSON.stringify(data))
 	file.close()
 
-	status_label.text = (
-		"EM6 level saved locally."
-	)
+	status_label.text = "EM6 level saved."
 
 
 # ============================================================
-# LOAD LEVEL LOCALLY
+# LOCAL LOAD
 # ============================================================
 
 func _on_load_pressed() -> void:
 
 	if not FileAccess.file_exists(SAVE_PATH):
-
-		status_label.text = (
-			"No saved level found."
-		)
-
+		status_label.text = "No saved level found."
 		return
 
 	var file: FileAccess = FileAccess.open(
-		SAVE_PATH,
-		FileAccess.READ
+		SAVE_PATH, FileAccess.READ
 	)
 
 	if file == null:
-
-		status_label.text = (
-			"Could not read save file."
-		)
-
+		status_label.text = "Could not read save file."
 		return
 
 	if file.get_length() > MAX_DECOMPRESSED_SIZE:
 
 		file.close()
-
-		status_label.text = (
-			"Save file is too large."
-		)
-
+		status_label.text = "Save file too large."
 		return
 
-	var text_data: String = file.get_as_text()
-
+	var raw_text: String = file.get_as_text()
 	file.close()
 
 	var parser := JSON.new()
 
-	if (
-		parser.parse(text_data) != OK
-		or not (parser.data is Dictionary)
-	):
+	if parser.parse(raw_text) != OK:
+		status_label.text = "Invalid save JSON."
+		return
 
-		status_label.text = (
-			"Invalid save file."
-		)
-
+	if not (parser.data is Dictionary):
+		status_label.text = "Invalid save structure."
 		return
 
 	var data: Dictionary = parser.data
-
 	var error: String = validate_level(data)
 
 	if not error.is_empty():
-
-		status_label.text = (
-			"Load failed: " + error
-		)
-
+		status_label.text = "Load failed: " + error
 		return
 
 	apply_level_data(data)
 
-	status_label.text = (
-		"Level loaded successfully."
-	)
+	status_label.text = "Level loaded successfully."
 
 
 # ============================================================
-# SHARE LEVEL CODE
+# SHARE CODE
 # ============================================================
 
 func _on_export_pressed() -> void:
 
 	var data: Dictionary = export_level_data()
-
 	var error: String = validate_level(data)
 
 	if not error.is_empty():
-
-		status_label.text = (
-			"Export failed: " + error
-		)
-
+		status_label.text = "Export failed: " + error
 		return
 
 	var code: String = encode_level(data)
 
 	if code.length() > MAX_CODE_LENGTH:
-
-		status_label.text = (
-			"Level exceeds share-code limit."
-		)
-
+		status_label.text = "Level exceeds code limit."
 		return
 
 	open_code_dialog("export", code)
 
-
-# ============================================================
-# IMPORT LEVEL CODE
-# ============================================================
 
 func _on_import_pressed() -> void:
 	open_code_dialog("import")
@@ -2129,38 +1707,14 @@ func _apply_import() -> void:
 	if result.has("error"):
 
 		dialog_note.text = str(result["error"])
-
 		return
 
 	apply_level_data(result["data"])
 
 	overlay.hide()
-
 	dialog_mode = ""
-
 	code_field.release_focus()
 
 	status_label.text = (
-		"Offline level password imported successfully!"
-	)
-
-func _on_grid_type_selected(index: int) -> void:
-
-	match index:
-
-		0:
-			selected_grid_type = "square"
-
-		1:
-			selected_grid_type = "rhombus"
-
-		2:
-			selected_grid_type = "hex"
-
-		_:
-			return
-
-	status_label.text = (
-		"Selected grid: %s. Geometry integration pending."
-		% grid_type_selector.get_item_text(index)
+		"Level code imported successfully."
 	)

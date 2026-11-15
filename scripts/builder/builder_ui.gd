@@ -83,6 +83,7 @@ func _select_category(category_name: String) -> void:
 		child.queue_free()
 	match category_name:
 		"Routing":
+			add_template("▶ Begin", PuzzleNode.Kind.BEGIN)
 			add_template("● Neutral", PuzzleNode.Kind.NORMAL)
 			add_template("A Alternating", PuzzleNode.Kind.ALTERNATING)
 			add_template("↶ Bounce", PuzzleNode.Kind.BOUNCE)
