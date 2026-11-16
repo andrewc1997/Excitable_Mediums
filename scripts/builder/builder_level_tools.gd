@@ -1,4 +1,3 @@
-
 extends Node
 
 # ============================================================
@@ -14,6 +13,8 @@ extends Node
 const NODE_SCENE: PackedScene = preload(
 	"res://scenes/nodes/puzzle_node.tscn"
 )
+
+const DESIGN_VALIDATOR = preload("res://scripts/builder/test/level_design_validator.gd")
 
 const FORMAT_VERSION: int = 6
 const SAVE_PATH: String = "user://excitable_level.json"
@@ -52,6 +53,7 @@ var apply_button: Button
 var close_button: Button
 
 var dialog_mode: String = ""
+var validation_dialog: AcceptDialog
 var clear_confirmation: ConfirmationDialog
 
 # ============================================================
@@ -71,6 +73,7 @@ func _initialize_level_tools() -> void:
 	create_toolbar()
 	create_code_dialog()
 	create_clear_confirmation()
+	create_validation_dialog()
 
 	var live_grid := grid as SquarePuzzleGrid
 
@@ -163,6 +166,7 @@ func create_toolbar() -> void:
 	)
 	row.add_child(increase_size_button)
 
+	add_toolbar_button(row, "Validate", _on_validate_pressed)
 	add_toolbar_button(row, "Clear", _on_clear_pressed)
 	add_toolbar_button(row, "Save", _on_save_pressed)
 	add_toolbar_button(row, "Load", _on_load_pressed)
@@ -289,22 +293,16 @@ func apply_grid_size(size: int) -> void:
 
 		return
 
-	var live_grid := grid as SquarePuzzleGrid
-
-	# Terminal coordinates depend on grid height.
-	if (
-		live_grid != null
-		and live_grid.is_rhombus()
-		and not builder.nodes_by_id.is_empty()
-		and (
-			size != grid.grid_columns
-			or size != grid.grid_rows
-		)
-	):
-
-		status_label.text = (
-			"Clear the rhombus before resizing."
-		)
+	# The rhombus terminal depends on the grid height.
+	# Keep the condition simple for Godot 4.3 parser compatibility.
+	var live_grid: SquarePuzzleGrid = grid as SquarePuzzleGrid
+	var is_rhombus: bool = false
+	if live_grid != null:
+		is_rhombus = live_grid.is_rhombus()
+	var has_nodes: bool = not builder.nodes_by_id.is_empty()
+	var size_changed: bool = size != grid.grid_columns or size != grid.grid_rows
+	if is_rhombus and has_nodes and size_changed:
+		status_label.text = "Clear the rhombus before resizing."
 		return
 
 	var old_columns: int = grid.grid_columns
@@ -822,7 +820,8 @@ func export_level_data() -> Dictionary:
 			"delay_ticks": node.delay_ticks,
 			"repeat_count": node.repeat_count,
 			"repeat_interval": node.repeat_interval,
-			"one_way_direction": int(node.one_way_direction)
+			"one_way_direction": int(node.one_way_direction),
+			"alternating_first_branch": int(node.alternating_first_branch)
 		})
 
 	for connection in builder.connection_layer.connections:
@@ -1233,6 +1232,12 @@ func validate_level(data: Dictionary) -> String:
 			):
 				return "Invalid One-Way direction."
 
+		# Optional in EM6 for compatibility with existing codes.
+		# Older EM6 levels default to Upper / North-East first.
+		if entry.has("alternating_first_branch"):
+			if not _valid_int(entry["alternating_first_branch"], 0, 1):
+				return "Invalid Alternating starting branch."
+
 		if int(entry["kind"]) == PuzzleNode.Kind.BEGIN:
 
 			begin_count += 1
@@ -1518,6 +1523,9 @@ func apply_level_data(data: Dictionary) -> void:
 			)
 		)
 
+		node.alternating_first_branch = int(
+			entry.get("alternating_first_branch", 0)
+		)
 		node.linked_target_uid = ""
 
 		builder.placed_nodes.add_child(node)
@@ -1591,6 +1599,59 @@ func apply_level_data(data: Dictionary) -> void:
 
 	if builder.builder_ui != null:
 		builder.builder_ui.show_selected_node("")
+
+
+# ============================================================
+# PUZZLE DESIGN VALIDATION
+# ============================================================
+
+func create_validation_dialog() -> void:
+	validation_dialog = AcceptDialog.new()
+	validation_dialog.title = "Puzzle Validation"
+	validation_dialog.dialog_text = ""
+	validation_dialog.min_size = Vector2i(560, 300)
+	ui_layer.add_child(validation_dialog)
+
+
+func _on_validate_pressed() -> void:
+	var data: Dictionary = export_level_data()
+	var structural_error: String = validate_level(data)
+	if not structural_error.is_empty():
+		status_label.text = "Level format error: " + structural_error
+		validation_dialog.dialog_text = "Level format error:\n" + structural_error
+		validation_dialog.popup_centered()
+		return
+
+	var report: Dictionary = DESIGN_VALIDATOR.inspect(data)
+	var errors: Array[String] = report["errors"]
+	var warnings: Array[String] = report["warnings"]
+	var lines: Array[String] = []
+
+	lines.append("Nodes: %d  |  Connections: %d  |  Goals: %d" % [
+		report["node_count"], report["connection_count"], report["goal_count"]
+	])
+	lines.append("")
+
+	if errors.is_empty():
+		lines.append("PASS: Basic puzzle structure is valid.")
+		status_label.text = "Validation: structure OK (%d warning(s))." % warnings.size()
+	else:
+		lines.append("FAIL: %d issue(s) must be fixed:" % errors.size())
+		for issue in errors:
+			lines.append("  - " + issue)
+		status_label.text = "Validation: %d issue(s), %d warning(s)." % [errors.size(), warnings.size()]
+
+	if not warnings.is_empty():
+		lines.append("")
+		lines.append("Warnings (%d):" % warnings.size())
+		for warning in warnings:
+			lines.append("  - " + warning)
+
+	lines.append("")
+	lines.append("This checks structure and graph connectivity only.")
+	lines.append("It does NOT prove the pulse simulation can solve the level.")
+	validation_dialog.dialog_text = "\n".join(lines)
+	validation_dialog.popup_centered()
 
 
 # ============================================================

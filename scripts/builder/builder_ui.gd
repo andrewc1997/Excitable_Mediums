@@ -1,5 +1,3 @@
-
-
 extends Node
 
 # EM4 grouped palette and inspector. Godot 4.3.
@@ -21,6 +19,9 @@ var blocker_amount_fields: VBoxContainer
 var gate_amount_fields: VBoxContainer
 var direction_fields: VBoxContainer
 var direction_option: OptionButton
+var alternating_fields: VBoxContainer
+var alternating_direction_option: OptionButton
+var cap_label: Label
 var channel_fields: VBoxContainer
 var delay_fields: VBoxContainer
 var repeater_fields: VBoxContainer
@@ -85,7 +86,7 @@ func _select_category(category_name: String) -> void:
 		"Routing":
 			add_template("▶ Begin", PuzzleNode.Kind.BEGIN)
 			add_template("● Neutral", PuzzleNode.Kind.NORMAL)
-			add_template("A Alternating", PuzzleNode.Kind.ALTERNATING)
+			add_template("↗↘ Alternating", PuzzleNode.Kind.ALTERNATING)
 			add_template("↶ Bounce", PuzzleNode.Kind.BOUNCE)
 		"Processing":
 			add_template("1<2 Splitter", PuzzleNode.Kind.SPLITTER)
@@ -102,12 +103,6 @@ func _select_category(category_name: String) -> void:
 			add_template("T Goal Target", PuzzleNode.Kind.TARGET)
 			add_template("T Trigger Target", PuzzleNode.Kind.TRIGGER_TARGET)
 			
-		"Routing":
-			add_template("▶ Begin", PuzzleNode.Kind.BEGIN)
-			add_template("● Neutral", PuzzleNode.Kind.NORMAL)
-			add_template("A Alternating", PuzzleNode.Kind.ALTERNATING)
-			add_template("↶ Bounce", PuzzleNode.Kind.BOUNCE)
-
 
 func add_template(title: String, kind: int) -> void:
 	var button := Button.new()
@@ -134,15 +129,18 @@ func create_inspector() -> void:
 	inspector_panel.offset_right = -12.0
 	inspector_panel.offset_top = 215.0
 	inspector_panel.offset_bottom = -155.0
+
 	var scroll := ScrollContainer.new()
 	inspector_panel.add_child(scroll)
 	var column := VBoxContainer.new()
 	column.custom_minimum_size.x = 215.0
 	scroll.add_child(column)
+
 	var title := Label.new()
 	title.text = "NODE PROPERTIES"
 	title.add_theme_font_size_override("font_size", 19)
 	column.add_child(title)
+
 	selected_label = Label.new()
 	column.add_child(selected_label)
 	add_field_label(column, "Node Type")
@@ -150,22 +148,40 @@ func create_inspector() -> void:
 	var names: Array[String] = [
 		"Neutral", "Splitter", "Alternating", "Goal Target",
 		"Single Blocker", "Amount Blocker", "Target Blocker",
-		"Amount Gate", "Trigger Target", "Delay", "Repeater", "Bounce", "One-Way Gate","Begin"
+		"Amount Gate", "Trigger Target", "Delay", "Repeater",
+		"Bounce", "One-Way Gate", "Begin"
 	]
 	for i in range(names.size()):
 		node_type_option.add_item(names[i], i)
 	column.add_child(node_type_option)
 	node_type_option.item_selected.connect(_on_kind_changed)
+
 	cap_container = VBoxContainer.new()
 	column.add_child(cap_container)
-	add_field_label(cap_container, "Activation Cap / Required Target Hits")
+	cap_label = add_field_label(cap_container, "Activation Cap / Required Target Hits")
 	cap_spin = create_spin(cap_container, 1, 100)
 	cap_spin.value_changed.connect(_on_number_changed.bind("cap"))
+
 	refractory_container = VBoxContainer.new()
 	column.add_child(refractory_container)
 	add_field_label(refractory_container, "Refractory Ticks")
 	refractory_spin = create_spin(refractory_container, 0, 100)
 	refractory_spin.value_changed.connect(_on_number_changed.bind("refractory"))
+
+	# Each Alternating Node chooses its starting branch.
+	alternating_fields = VBoxContainer.new()
+	column.add_child(alternating_fields)
+	add_field_label(alternating_fields, "First Signal Direction")
+	alternating_direction_option = OptionButton.new()
+	alternating_direction_option.add_item("North-East / Upper", 0)
+	alternating_direction_option.add_item("South-East / Lower", 1)
+	alternating_fields.add_child(alternating_direction_option)
+	alternating_direction_option.item_selected.connect(_on_alternating_branch_changed)
+	var alternating_note := Label.new()
+	alternating_note.text = "Switches after each passing signal."
+	alternating_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	alternating_fields.add_child(alternating_note)
+
 	splitter_fields = VBoxContainer.new()
 	column.add_child(splitter_fields)
 	add_field_label(splitter_fields, "Required Inputs")
@@ -174,31 +190,34 @@ func create_inspector() -> void:
 	add_field_label(splitter_fields, "Output Signals")
 	outputs_spin = create_spin(splitter_fields, 1, 6)
 	outputs_spin.value_changed.connect(_on_number_changed.bind("outputs"))
+
 	blocker_amount_fields = VBoxContainer.new()
 	column.add_child(blocker_amount_fields)
 	add_field_label(blocker_amount_fields, "Signals Blocked Before Opening")
 	blocker_hits_spin = create_spin(blocker_amount_fields, 1, 100)
 	blocker_hits_spin.value_changed.connect(_on_number_changed.bind("blocker_hits"))
+
 	gate_amount_fields = VBoxContainer.new()
 	column.add_child(gate_amount_fields)
 	add_field_label(gate_amount_fields, "Signals Allowed Before Closing")
 	gate_passes_spin = create_spin(gate_amount_fields, 1, 100)
 	gate_passes_spin.value_changed.connect(_on_number_changed.bind("gate_passes"))
+
 	channel_fields = VBoxContainer.new()
 	column.add_child(channel_fields)
 	add_field_label(channel_fields, "Trigger Channel")
 	channel_option = OptionButton.new()
-	channel_option.add_item("Purple", PuzzleNode.Channel.PURPLE)
-	channel_option.add_item("Blue", PuzzleNode.Channel.BLUE)
-	channel_option.add_item("Green", PuzzleNode.Channel.GREEN)
-	channel_option.add_item("Red", PuzzleNode.Channel.RED)
+	for channel_name in ["Purple", "Blue", "Green", "Red"]:
+		channel_option.add_item(channel_name)
 	channel_fields.add_child(channel_option)
 	channel_option.item_selected.connect(_on_channel_changed)
+
 	delay_fields = VBoxContainer.new()
 	column.add_child(delay_fields)
 	add_field_label(delay_fields, "Delay Duration (Ticks)")
 	delay_spin = create_spin(delay_fields, 1, 100)
 	delay_spin.value_changed.connect(_on_number_changed.bind("delay_ticks"))
+
 	repeater_fields = VBoxContainer.new()
 	column.add_child(repeater_fields)
 	add_field_label(repeater_fields, "Repeater: Number of Pulses")
@@ -217,10 +236,14 @@ func create_inspector() -> void:
 	direction_fields.add_child(direction_option)
 	direction_option.item_selected.connect(_on_direction_changed)
 
-func add_field_label(parent: Node, title: String) -> void:
+
+func add_field_label(parent: Node, title: String) -> Label:
 	var label := Label.new()
 	label.text = title
 	parent.add_child(label)
+	return label
+
+
 func create_spin(parent: Node, minimum: int, maximum: int) -> SpinBox:
 	var spin := SpinBox.new()
 	spin.min_value = minimum
@@ -232,19 +255,29 @@ func create_spin(parent: Node, minimum: int, maximum: int) -> SpinBox:
 
 func show_selected_node(uid: String) -> void:
 	selected_uid = uid
-	if inspector_panel == null: return
+	if inspector_panel == null:
+		return
 	var valid: bool = not uid.is_empty() and builder.nodes_by_id.has(uid)
 	selected_label.text = "Selected: " + uid if valid else "No node selected"
 	node_type_option.disabled = not valid
-	for section in [cap_container, refractory_container, splitter_fields, blocker_amount_fields, gate_amount_fields, channel_fields, delay_fields, repeater_fields, direction_fields]:
+	for section in [
+		cap_container, refractory_container, alternating_fields,
+		splitter_fields, blocker_amount_fields, gate_amount_fields,
+		channel_fields, delay_fields, repeater_fields, direction_fields
+	]:
 		section.hide()
-	if not valid: return
+	if not valid:
+		return
+
 	var node: PuzzleNode = builder.nodes_by_id[uid]
 	updating_controls = true
-	selected_label.text = "%s | Cell (%d, %d)" % [node.node_uid, node.grid_cell.x, node.grid_cell.y]
+	selected_label.text = "%s | Cell (%d, %d)" % [
+		node.node_uid, node.grid_cell.x, node.grid_cell.y
+	]
 	node_type_option.select(int(node.kind))
 	cap_spin.set_value_no_signal(node.activation_cap)
 	refractory_spin.set_value_no_signal(node.refractory_ticks)
+	alternating_direction_option.select(int(node.alternating_first_branch))
 	inputs_spin.set_value_no_signal(node.required_inputs)
 	outputs_spin.set_value_no_signal(node.output_count)
 	blocker_hits_spin.set_value_no_signal(node.blocker_hits)
@@ -254,24 +287,39 @@ func show_selected_node(uid: String) -> void:
 	repeat_count_spin.set_value_no_signal(node.repeat_count)
 	repeat_interval_spin.set_value_no_signal(node.repeat_interval)
 	direction_option.select(int(node.one_way_direction))
+
+	cap_label.text = "Activation Cap / Required Target Hits"
 	match node.kind:
 		PuzzleNode.Kind.SPLITTER:
+			cap_label.text = "Maximum Activations"
 			cap_container.show()
 			refractory_container.show()
 			splitter_fields.show()
 		PuzzleNode.Kind.ALTERNATING:
+			cap_label.text = "Maximum Signals"
 			cap_container.show()
-			refractory_container.show()
-		PuzzleNode.Kind.TARGET: cap_container.show()
-		PuzzleNode.Kind.BLOCKER_AMOUNT: blocker_amount_fields.show()
-		PuzzleNode.Kind.BLOCKER_TARGET: channel_fields.show()
-		PuzzleNode.Kind.GATE_AMOUNT: gate_amount_fields.show()
+			alternating_fields.show()
+			# Refractory is deliberately hidden: alternators
+			# switch for each arriving signal without cooldown.
+		PuzzleNode.Kind.TARGET:
+			cap_label.text = "Required Target Hits"
+			cap_container.show()
+		PuzzleNode.Kind.BLOCKER_AMOUNT:
+			blocker_amount_fields.show()
+		PuzzleNode.Kind.BLOCKER_TARGET:
+			channel_fields.show()
+		PuzzleNode.Kind.GATE_AMOUNT:
+			gate_amount_fields.show()
 		PuzzleNode.Kind.TRIGGER_TARGET:
+			cap_label.text = "Required Trigger Hits"
 			cap_container.show()
 			channel_fields.show()
-		PuzzleNode.Kind.DELAY: delay_fields.show()
-		PuzzleNode.Kind.REPEATER: repeater_fields.show()
-		PuzzleNode.Kind.ONE_WAY_GATE: direction_fields.show()
+		PuzzleNode.Kind.DELAY:
+			delay_fields.show()
+		PuzzleNode.Kind.REPEATER:
+			repeater_fields.show()
+		PuzzleNode.Kind.ONE_WAY_GATE:
+			direction_fields.show()
 	updating_controls = false
 
 
@@ -314,6 +362,16 @@ func _on_direction_changed(index: int) -> void:
 	var node: PuzzleNode = builder.nodes_by_id[selected_uid]
 	node.one_way_direction = index
 	node.refresh_visuals()
+
+func _on_alternating_branch_changed(index: int) -> void:
+	if updating_controls or not builder.nodes_by_id.has(selected_uid):
+		return
+	var node: PuzzleNode = builder.nodes_by_id[selected_uid]
+	if node.kind != PuzzleNode.Kind.ALTERNATING:
+		return
+	node.alternating_first_branch = clampi(index, 0, 1)
+	node.refresh_visuals()
+
 
 func _on_number_changed(value: float, property_name: String) -> void:
 	if updating_controls or not builder.nodes_by_id.has(selected_uid): return

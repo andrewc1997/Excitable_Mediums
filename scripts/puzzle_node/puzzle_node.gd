@@ -554,11 +554,11 @@ func set_alternating_display(
 
 func _draw_alternating_symbol() -> void:
 
-	# A forked path, like a small railway switch.
-	# The highlighted branch is the last one used.
+	# The highlighted branch is the NEXT available route.
+	# The other branch is greyed out.
 	#
-	# Before testing, the upper branch is shown
-	# as the initial default.
+	# 0 = Upper / North-East
+	# 1 = Lower / South-East
 
 	var incoming_start := Vector2(-16.0, 0.0)
 	var junction := Vector2(-2.0, 0.0)
@@ -566,53 +566,51 @@ func _draw_alternating_symbol() -> void:
 	var upper_exit := Vector2(15.0, -11.0)
 	var lower_exit := Vector2(15.0, 11.0)
 
-	var inactive_color := Color("#e5f2f5")
-	var active_color := Color("#ff555d")
+	# Visual colours
+	var incoming_color := Color("#E5F2F5")
+	var available_color := Color("#F4FFFF")
+	var unavailable_color := Color("#526B74")
 
-	var selected_exit: int = (
-		0 if runtime_alternating_exit < 0
-		else runtime_alternating_exit
-	)
+	# In Builder mode, use the configured first branch.
+	# In test mode, show the next branch to be used.
+	var selected_exit: int = alternating_first_branch
 
-	# Incoming bridge.
+	if runtime_alternating_exit >= 0:
+		selected_exit = runtime_alternating_exit
+
+	var upper_available: bool = selected_exit % 2 == 0
+	var lower_available: bool = not upper_available
+
+	# Incoming path
 	draw_line(
 		incoming_start,
 		junction,
-		inactive_color,
+		incoming_color,
 		3.0,
 		true
 	)
 
-	# Upper branch.
+	# Upper path
 	draw_line(
 		junction,
 		upper_exit,
-		active_color if selected_exit % 2 == 0
-		else inactive_color,
-		3.6,
+		available_color if upper_available else unavailable_color,
+		3.8 if upper_available else 2.8,
 		true
 	)
 
-	# Lower branch.
+	# Lower path
 	draw_line(
 		junction,
 		lower_exit,
-		active_color if selected_exit % 2 == 1
-		else inactive_color,
-		3.6,
+		available_color if lower_available else unavailable_color,
+		3.8 if lower_available else 2.8,
 		true
 	)
 
+	# Junction
 	draw_circle(
 		junction,
 		2.4,
-		Color.WHITE
-	)
-
-	# Keep remaining activation count visible.
-	_draw_centered_text(
-		get_counter_text(),
-		19.0,
-		10,
 		Color.WHITE
 	)

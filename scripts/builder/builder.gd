@@ -1,19 +1,16 @@
-
 extends Node2D
 
 # ============================================================
 # EXCITABLE MEDIUMS - LEVEL BUILDER
 # Godot 4.3
 #
-# Palette drag: Place node
-# Left drag between nodes: Create connection
+# Left drag: Create directed connection
 # Shift + left drag: Move node
 # Right-click node: Delete node
 # Right-click line: Delete connection
+# Palette drag: Place node
 # Middle drag: Pan
 # Mouse wheel: Zoom
-#
-# Supports Square and X-stretched Rhombus.
 # ============================================================
 
 const NODE_SCENE: PackedScene = preload(
@@ -77,13 +74,13 @@ func _ready() -> void:
 
 	if help_label != null:
 		help_label.text = (
-			"Drag templates | Shift+Drag: Move | "
-			+ "Middle drag: Pan"
+			"Drag templates | Shift+Click to connect | "
+			+ "Middle drag to pan"
 		)
 
 	if tool_label != null:
 		tool_label.text = "Builder Ready"
-
+	
 	update_tool_label()
 
 
@@ -94,38 +91,18 @@ func _ready() -> void:
 func is_editing_blocked() -> bool:
 
 	if test_level != null:
-
 		if test_level.get("test_mode") == true:
 			return true
 
 	if level_tools != null:
 
-		var code_overlay: Variant = (
-			level_tools.get("overlay")
-		)
+		var code_overlay = level_tools.get("overlay")
 
 		if is_instance_valid(code_overlay):
-
 			if code_overlay.visible:
 				return true
 
 	return false
-
-
-# ============================================================
-# CHECK POINTER OVER BUILDER UI
-# ============================================================
-
-func is_pointer_over_builder_ui(
-	screen_position: Vector2
-) -> bool:
-
-	if builder_ui == null:
-		return false
-
-	return builder_ui.is_pointer_over_ui(
-		screen_position
-	)
 
 
 # ============================================================
@@ -144,12 +121,9 @@ func begin_palette_drag(kind: int) -> void:
 
 	palette_drag_kind = kind
 
-	palette_preview = (
-		NODE_SCENE.instantiate() as PuzzleNode
-	)
+	palette_preview = NODE_SCENE.instantiate() as PuzzleNode
 
 	if palette_preview == null:
-
 		palette_drag_kind = -1
 		return
 
@@ -182,20 +156,15 @@ func _process(_delta: float) -> void:
 		return
 
 	if is_instance_valid(palette_preview):
-
 		palette_preview.global_position = (
 			get_global_mouse_position()
 		)
 
 
 # ============================================================
-# INPUT
-#
-# ALL MOUSE INPUT IS HANDLED HERE.
-#
-# Do not also process mouse buttons in
-# _unhandled_input().
+# ACTIVE DRAG INPUT
 # ============================================================
+
 
 func _input(event: InputEvent) -> void:
 
@@ -203,7 +172,7 @@ func _input(event: InputEvent) -> void:
 		return
 
 	# ====================================================
-	# KEYBOARD
+	# KEYBOARD INPUT
 	# ====================================================
 
 	if event is InputEventKey:
@@ -214,13 +183,11 @@ func _input(event: InputEvent) -> void:
 		if event.keycode == KEY_ESCAPE:
 
 			cancel_palette_drag()
-
 			connection_start_id = ""
 			dragging_node_id = ""
 			is_panning = false
 
 			update_tool_label()
-
 			get_viewport().set_input_as_handled()
 			return
 
@@ -228,8 +195,8 @@ func _input(event: InputEvent) -> void:
 
 			if selected_node_id != "":
 				delete_node(selected_node_id)
+				get_viewport().set_input_as_handled()
 
-			get_viewport().set_input_as_handled()
 			return
 
 		return
@@ -240,18 +207,11 @@ func _input(event: InputEvent) -> void:
 
 	if event is InputEventMouseMotion:
 
-		# Panning takes priority.
 		if is_panning:
-
-			camera.position -= (
-				event.relative
-				/ maxf(camera.zoom.x, 0.01)
-			)
-
+			camera.position -= event.relative / camera.zoom.x
 			get_viewport().set_input_as_handled()
 			return
 
-		# Node relocation.
 		if dragging_node_id != "":
 
 			move_node_to_mouse(dragging_node_id)
@@ -268,19 +228,21 @@ func _input(event: InputEvent) -> void:
 	if not (event is InputEventMouseButton):
 		return
 
+	var over_ui: bool = false
+
+	if builder_ui != null:
+		over_ui = builder_ui.is_pointer_over_ui(
+			event.position
+		)
+
 	# ====================================================
-	# MIDDLE BUTTON: PAN
+	# MIDDLE MOUSE: PAN
 	# ====================================================
 
 	if event.button_index == MOUSE_BUTTON_MIDDLE:
 
 		if event.pressed:
-
-			if not is_pointer_over_builder_ui(
-				event.position
-			):
-				is_panning = true
-
+			is_panning = not over_ui
 		else:
 			is_panning = false
 
@@ -293,49 +255,32 @@ func _input(event: InputEvent) -> void:
 	# MOUSE WHEEL: ZOOM
 	# ====================================================
 
-	if event.pressed:
+	if event.pressed and not over_ui:
 
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
-
-			if not is_pointer_over_builder_ui(
-				event.position
-			):
-
-				change_zoom(1.1)
-				get_viewport().set_input_as_handled()
-
+			change_zoom(1.1)
+			get_viewport().set_input_as_handled()
 			return
 
 		if event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
-
-			if not is_pointer_over_builder_ui(
-				event.position
-			):
-
-				change_zoom(1.0 / 1.1)
-				get_viewport().set_input_as_handled()
-
+			change_zoom(1.0 / 1.1)
+			get_viewport().set_input_as_handled()
 			return
 
 	# ====================================================
-	# RIGHT CLICK: DELETE
+	# RIGHT CLICK: DELETE NODE OR CONNECTION
 	# ====================================================
 
 	if event.button_index == MOUSE_BUTTON_RIGHT:
 
-		if event.pressed:
-
-			if not is_pointer_over_builder_ui(
-				event.position
-			):
-
-				handle_right_click()
-				get_viewport().set_input_as_handled()
+		if event.pressed and not over_ui:
+			handle_right_click()
+			get_viewport().set_input_as_handled()
 
 		return
 
 	# ====================================================
-	# LEFT BUTTON ONLY BELOW THIS POINT
+	# LEFT MOUSE
 	# ====================================================
 
 	if event.button_index != MOUSE_BUTTON_LEFT:
@@ -347,30 +292,17 @@ func _input(event: InputEvent) -> void:
 
 	if event.pressed:
 
-		# Palette dragging begins in BuilderUI.
-		# Never start a connection at the same time.
+		# Palette dragging starts from the UI.
+		# Do not select nodes during that operation.
 		if palette_drag_kind >= 0:
 			return
 
-		if is_panning:
-			return
-
-		if is_pointer_over_builder_ui(
-			event.position
-		):
+		if over_ui:
 			return
 
 		handle_left_press(event.shift_pressed)
 
-		# Only consume a press that actually selected
-		# a node for movement or connection creation.
-		if (
-			connection_start_id != ""
-			or dragging_node_id != ""
-		):
-
-			get_viewport().set_input_as_handled()
-
+		get_viewport().set_input_as_handled()
 		return
 
 	# ====================================================
@@ -383,9 +315,7 @@ func _input(event: InputEvent) -> void:
 
 		cancel_palette_drag()
 
-		if not is_pointer_over_builder_ui(
-			event.position
-		):
+		if not over_ui:
 
 			var cell: Vector2i = get_mouse_cell()
 
@@ -393,12 +323,11 @@ func _input(event: InputEvent) -> void:
 				place_node(cell, kind)
 
 		update_tool_label()
-
 		get_viewport().set_input_as_handled()
 		return
 
 	# ====================================================
-	# LEFT RELEASE: FINISH MOVING NODE
+	# LEFT RELEASE: FINISH MOVING A NODE
 	# ====================================================
 
 	if dragging_node_id != "":
@@ -411,12 +340,11 @@ func _input(event: InputEvent) -> void:
 			select_node(moved_uid)
 
 		update_tool_label()
-
 		get_viewport().set_input_as_handled()
 		return
 
 	# ====================================================
-	# LEFT RELEASE: FINISH CONNECTION
+	# LEFT RELEASE: FINISH CONNECTION DRAG
 	# ====================================================
 
 	if connection_start_id != "":
@@ -425,29 +353,27 @@ func _input(event: InputEvent) -> void:
 
 		connection_start_id = ""
 
-		if not is_pointer_over_builder_ui(
-			event.position
-		):
+		if not over_ui:
 
-			var target_cell: Vector2i = (
-				get_mouse_cell()
-			)
+			var target_cell: Vector2i = get_mouse_cell()
+			var to_id: String = get_id_at_cell(target_cell)
 
-			var to_id: String = (
-				get_id_at_cell(target_cell)
-			)
-
-			if (
-				to_id != ""
-				and to_id != from_id
-			):
-
+			if to_id != "" and to_id != from_id:
 				create_connection(from_id, to_id)
 
 		update_tool_label()
-
 		get_viewport().set_input_as_handled()
 		return
+
+
+
+# ============================================================
+# GENERAL INPUT
+# ============================================================
+
+
+func _unhandled_input(_event: InputEvent) -> void:
+	pass
 
 
 # ============================================================
@@ -456,9 +382,7 @@ func _input(event: InputEvent) -> void:
 
 func get_mouse_cell() -> Vector2i:
 
-	var world_position: Vector2 = (
-		get_global_mouse_position()
-	)
+	var world_position: Vector2 = get_global_mouse_position()
 
 	return grid.local_to_cell(
 		grid.to_local(world_position)
@@ -489,9 +413,9 @@ func select_node(uid: String) -> void:
 
 		if nodes_by_id.has(selected_node_id):
 
-			var old_node: PuzzleNode = (
-				nodes_by_id[selected_node_id]
-			)
+			var old_node: PuzzleNode = nodes_by_id[
+				selected_node_id
+			]
 
 			old_node.selected = false
 			old_node.queue_redraw()
@@ -501,7 +425,6 @@ func select_node(uid: String) -> void:
 	if uid != "" and nodes_by_id.has(uid):
 
 		var node: PuzzleNode = nodes_by_id[uid]
-
 		node.selected = true
 		node.queue_redraw()
 
@@ -509,24 +432,20 @@ func select_node(uid: String) -> void:
 
 
 # ============================================================
-# LEFT PRESS: SELECT / CONNECT / MOVE
+# LEFT CLICK / DRAG
 # ============================================================
 
-func handle_left_press(
-	shift_held: bool
-) -> void:
+func handle_left_press(shift_held: bool) -> void:
 
 	var cell: Vector2i = get_mouse_cell()
 
 	if not grid.is_valid_cell(cell):
-
 		select_node("")
 		return
 
 	var uid: String = get_id_at_cell(cell)
 
 	if uid == "":
-
 		select_node("")
 		return
 
@@ -549,28 +468,23 @@ func handle_left_press(
 # PLACE NODE
 # ============================================================
 
-func place_node(
-	cell: Vector2i,
-	kind: int
-) -> void:
+func place_node(cell: Vector2i, kind: int) -> void:
+
+	# Only one Begin Node is allowed.
+	if kind == PuzzleNode.Kind.BEGIN:
+		for existing_node in nodes_by_id.values():
+			var puzzle_node: PuzzleNode = existing_node
+
+			if puzzle_node.kind == PuzzleNode.Kind.BEGIN:
+				print("Only one Begin Node is permitted.")
+				return
+
 
 	if not grid.is_valid_cell(cell):
 		return
 
 	if cells_to_ids.has(cell):
 		return
-
-	# Only one Begin Node per level.
-	if kind == PuzzleNode.Kind.BEGIN:
-
-		for existing in nodes_by_id.values():
-
-			var existing_node: PuzzleNode = existing
-
-			if existing_node.kind == PuzzleNode.Kind.BEGIN:
-
-				print("Only one Begin Node is permitted.")
-				return
 
 	var proposed_occupancy: Dictionary = (
 		cells_to_ids.duplicate()
@@ -586,7 +500,6 @@ func place_node(
 		connection_layer.connections,
 		proposed_paths
 	):
-
 		print("Cannot place node: connections blocked.")
 		return
 
@@ -597,17 +510,12 @@ func place_node(
 	if node == null:
 		return
 
-	var uid: String = (
-		"node_%04d" % next_node_number
-	)
+	var uid: String = "node_%04d" % next_node_number
 
 	while nodes_by_id.has(uid):
 
 		next_node_number += 1
-
-		uid = (
-			"node_%04d" % next_node_number
-		)
+		uid = "node_%04d" % next_node_number
 
 	next_node_number += 1
 
@@ -694,11 +602,13 @@ func move_node_to_mouse(uid: String) -> void:
 
 
 # ============================================================
-# RIGHT CLICK
+# RIGHT CLICK - DELETE NODE OR CONNECTION
 # ============================================================
 
 func handle_right_click() -> void:
 
+	# First check whether the mouse is directly
+	# over a node. Nodes take priority over lines.
 	var node_uid: String = get_node_under_mouse()
 
 	if node_uid != "":
@@ -706,16 +616,20 @@ func handle_right_click() -> void:
 		delete_node(node_uid)
 		return
 
+	# Otherwise see whether the mouse is
+	# close enough to a connection.
 	var connection_index: int = (
 		get_connection_under_mouse()
 	)
 
 	if connection_index >= 0:
+
 		delete_connection(connection_index)
+		return
 
 
 # ============================================================
-# FIND NODE UNDER MOUSE
+# DETECT NODE UNDER MOUSE
 # ============================================================
 
 func get_node_under_mouse() -> String:
@@ -746,7 +660,10 @@ func get_node_under_mouse() -> String:
 
 
 # ============================================================
-# FIND CONNECTION UNDER MOUSE
+# DETECT CONNECTION UNDER MOUSE
+#
+# Checks the distance to EVERY segment of
+# EVERY connection, including bends.
 # ============================================================
 
 func get_connection_under_mouse() -> int:
@@ -755,6 +672,8 @@ func get_connection_under_mouse() -> int:
 		get_global_mouse_position()
 	)
 
+	# Keep the click tolerance consistent
+	# when zooming in or out.
 	var threshold: float = (
 		CONNECTION_DELETE_RADIUS_PX
 		/ maxf(camera.zoom.x, 0.01)
@@ -779,28 +698,17 @@ func get_connection_under_mouse() -> int:
 		if path.size() < 2:
 			continue
 
-		for segment_index in range(
-			path.size() - 1
-		):
+		for segment_index in range(path.size() - 1):
 
-			var start_cell: Vector2i = (
-				path[segment_index]
+			var start_cell: Vector2i = path[segment_index]
+			var end_cell: Vector2i = path[segment_index + 1]
+
+			var start_world: Vector2 = grid.to_global(
+				grid.cell_to_local(start_cell)
 			)
 
-			var end_cell: Vector2i = (
-				path[segment_index + 1]
-			)
-
-			var start_world: Vector2 = (
-				grid.to_global(
-					grid.cell_to_local(start_cell)
-				)
-			)
-
-			var end_world: Vector2 = (
-				grid.to_global(
-					grid.cell_to_local(end_cell)
-				)
+			var end_world: Vector2 = grid.to_global(
+				grid.cell_to_local(end_cell)
 			)
 
 			var nearest_point: Vector2 = (
@@ -812,9 +720,7 @@ func get_connection_under_mouse() -> int:
 			)
 
 			var distance: float = (
-				mouse_world.distance_to(
-					nearest_point
-				)
+				mouse_world.distance_to(nearest_point)
 			)
 
 			if distance <= closest_distance:
@@ -827,6 +733,10 @@ func get_connection_under_mouse() -> int:
 
 # ============================================================
 # DELETE CONNECTION
+#
+# IMPORTANT:
+# Only removes the selected connection.
+# Does not delete nodes or reroute other paths.
 # ============================================================
 
 func delete_connection(index: int) -> void:
@@ -850,16 +760,21 @@ func delete_connection(index: int) -> void:
 	)
 
 	connection_layer.connections.remove_at(index)
+
 	connection_layer.refresh_connections()
 
 	connection_start_id = ""
+
 	update_tool_label()
+
 
 	if is_instance_valid(tool_label):
 
 		tool_label.text = (
-			"Removed connection: %s -> %s"
-			% [from_id, to_id]
+			"Removed connection: %s -> %s" % [
+				from_id,
+				to_id
+			]
 		)
 
 
@@ -880,6 +795,7 @@ func delete_node(uid: String) -> void:
 
 	cells_to_ids.erase(node.grid_cell)
 
+	# Remove attached connections.
 	for index in range(
 		connection_layer.connections.size() - 1,
 		-1,
@@ -912,7 +828,8 @@ func delete_node(uid: String) -> void:
 	if dragging_node_id == uid:
 		dragging_node_id = ""
 
-	# Preserve existing routing behaviour.
+	# Existing behaviour: recalculate surviving paths
+	# after deleting a node.
 	var proposed_paths: Array[Dictionary] = []
 
 	if build_connection_paths(
@@ -946,15 +863,7 @@ func create_connection(
 	if from_id == to_id:
 		return
 
-	# Begin Nodes cannot receive incoming connections.
-	var destination: PuzzleNode = nodes_by_id[to_id]
-
-	if destination.kind == PuzzleNode.Kind.BEGIN:
-
-		print("Cannot connect into a Begin Node.")
-		return
-
-	# Prevent duplicates in either direction.
+	# Prevent duplicate edges in either direction.
 	for connection in connection_layer.connections:
 
 		var a: String = str(connection["from_uid"])
@@ -985,12 +894,19 @@ func create_connection(
 		proposed_connections,
 		proposed_paths
 	):
-
 		print("No valid connection route.")
 		return
 
 	connection_layer.connections = proposed_paths
 	connection_layer.refresh_connections()
+
+
+	# Begin Nodes cannot receive incoming connections.
+	var destination: PuzzleNode = nodes_by_id[to_id]
+
+	if destination.kind == PuzzleNode.Kind.BEGIN:
+		print("Cannot connect into a Begin Node.")
+		return
 
 
 # ============================================================
@@ -1009,8 +925,9 @@ func build_connection_paths(
 	if source_connections.is_empty():
 		return true
 
-	var attempt_count: int = (
-		8 + mini(source_connections.size(), 6)
+	var attempt_count: int = 8 + mini(
+		source_connections.size(),
+		6
 	)
 
 	for mode in range(attempt_count):
@@ -1038,7 +955,7 @@ func build_connection_paths(
 
 
 # ============================================================
-# GET CONNECTION ORDER
+# GET ROUTING ORDER
 # ============================================================
 
 func _get_connection_order(
@@ -1057,24 +974,20 @@ func _get_connection_order(
 	order.sort_custom(
 		func(a: int, b: int) -> bool:
 
-			var priority_a: int = (
-				_connection_route_priority(
-					source_connections[a],
-					position_overrides,
-					mode,
-					a,
-					count
-				)
+			var priority_a: int = _connection_route_priority(
+				source_connections[a],
+				position_overrides,
+				mode,
+				a,
+				count
 			)
 
-			var priority_b: int = (
-				_connection_route_priority(
-					source_connections[b],
-					position_overrides,
-					mode,
-					b,
-					count
-				)
+			var priority_b: int = _connection_route_priority(
+				source_connections[b],
+				position_overrides,
+				mode,
+				b,
+				count
 			)
 
 			if priority_a == priority_b:
@@ -1098,13 +1011,8 @@ func _connection_route_priority(
 	count: int
 ) -> int:
 
-	var from_id: String = str(
-		connection["from_uid"]
-	)
-
-	var to_id: String = str(
-		connection["to_uid"]
-	)
+	var from_id: String = str(connection["from_uid"])
+	var to_id: String = str(connection["to_uid"])
 
 	var from_cell: Vector2i = get_node_cell(from_id)
 	var to_cell: Vector2i = get_node_cell(to_id)
@@ -1160,11 +1068,14 @@ func _connection_route_priority(
 
 			var offset: int = mode - 8
 
-			return posmod(index - offset, count)
+			return posmod(
+				index - offset,
+				count
+			)
 
 
 # ============================================================
-# TRY ONE CONNECTION ROUTING ORDER
+# TRY ONE ROUTING ORDER
 # ============================================================
 
 func _try_connection_order(
@@ -1181,17 +1092,10 @@ func _try_connection_order(
 
 	for index in order:
 
-		var connection: Dictionary = (
-			source_connections[index]
-		)
+		var connection: Dictionary = source_connections[index]
 
-		var from_id: String = str(
-			connection["from_uid"]
-		)
-
-		var to_id: String = str(
-			connection["to_uid"]
-		)
+		var from_id: String = str(connection["from_uid"])
+		var to_id: String = str(connection["to_uid"])
 
 		if not nodes_by_id.has(from_id):
 			return false
@@ -1199,13 +1103,8 @@ func _try_connection_order(
 		if not nodes_by_id.has(to_id):
 			return false
 
-		var from_cell: Vector2i = (
-			get_node_cell(from_id)
-		)
-
-		var to_cell: Vector2i = (
-			get_node_cell(to_id)
-		)
+		var from_cell: Vector2i = get_node_cell(from_id)
+		var to_cell: Vector2i = get_node_cell(to_id)
 
 		if position_overrides.has(from_id):
 			from_cell = position_overrides[from_id]
@@ -1261,9 +1160,7 @@ func reserve_path_cells(
 		var start_cell: Vector2i = path[index]
 		var end_cell: Vector2i = path[index + 1]
 
-		var difference: Vector2i = (
-			end_cell - start_cell
-		)
+		var difference: Vector2i = end_cell - start_cell
 
 		var distance: int = maxi(
 			absi(difference.x),
@@ -1318,7 +1215,7 @@ func make_connection_record(
 
 
 # ============================================================
-# CAMERA ZOOM
+# CAMERA
 # ============================================================
 
 func change_zoom(factor: float) -> void:
@@ -1333,13 +1230,20 @@ func change_zoom(factor: float) -> void:
 
 
 # ============================================================
-# OPTIONAL TOOL LABEL
+# TOOL LABEL
+# ============================================================
+
+
+# ============================================================
+# TOOL LABEL
+#
+# Optional UI feedback.
+# The Builder works even if the old UI node
+# and ToolLabel have been removed.
 # ============================================================
 
 func update_tool_label() -> void:
 
-	# The old UI node was removed.
-	# Do not attempt to update missing labels.
 	if not is_instance_valid(tool_label):
 		return
 
@@ -1356,8 +1260,7 @@ func update_tool_label() -> void:
 	elif connection_start_id != "":
 
 		tool_label.text = (
-			"Connecting from %s"
-			% connection_start_id
+			"Connecting from %s" % connection_start_id
 		)
 
 	else:

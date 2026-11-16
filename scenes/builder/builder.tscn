@@ -19,8 +19,6 @@ layer = -1
 [node name="Grid" type="Node2D" parent="."]
 script = ExtResource("2_xqvey")
 grid_type = 1
-rhombus_half_width = null
-rhombus_half_height = null
 grid_color = Color(0.203922, 0.266667, 0.337255, 0.784314)
 axis_color = Color(0.376471, 0.470588, 0.54902, 0.658824)
 line_width = 0.5

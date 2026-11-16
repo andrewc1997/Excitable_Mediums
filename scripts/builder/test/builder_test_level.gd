@@ -1,4 +1,3 @@
-
 extends Node2D
 
 # ============================================================
@@ -778,6 +777,13 @@ func _activate_arrivals(
 		state["incoming_heading"] = arrival_heading
 
 	if bool(state.get("broken", false)):
+		return
+
+	# Alternators process each pulse independently, including
+	# arrivals at different ticks or several on the same tick.
+	# Do this before generic cap/refractory logic.
+	if node.kind == PuzzleNode.Kind.ALTERNATING:
+		_activate_alternating(uid, node, state, arrivals)
 		return
 
 	# ====================================================
@@ -2009,52 +2015,10 @@ func _dispatch_pulse(
 	from_uid: String,
 	choice: Dictionary
 ) -> void:
-
+	# Alternating display changes are handled by
+	# _activate_alternating(), AFTER its cursor advances.
+	# All other node types retain their normal dispatch.
 	var path: Array[Vector2i] = choice["path"]
-
-	# ====================================================
-	# UPDATE ALTERNATING NODE DISPLAY
-	# ====================================================
-
-	if (
-		builder.nodes_by_id.has(from_uid)
-		and node_states.has(from_uid)
-	):
-
-		var node: PuzzleNode = (
-			builder.nodes_by_id[from_uid]
-		)
-
-		if node.kind == PuzzleNode.Kind.ALTERNATING:
-
-			var options: Array[Dictionary] = (
-				_outgoing_links(from_uid)
-			)
-
-			var selected_index: int = -1
-
-			for index in range(options.size()):
-
-				if str(options[index]["to"]) == str(
-					choice["to"]
-				):
-					selected_index = index
-					break
-
-			if selected_index >= 0:
-
-				node_states[from_uid][
-					"alternating_last_exit"
-				] = selected_index
-
-				node.set_alternating_display(
-					selected_index
-				)
-
-	# ====================================================
-	# DISPATCH ALONG THE STORED CONNECTION
-	# ====================================================
-
 	_dispatch_path(
 		from_uid,
 		str(choice["to"]),
@@ -2266,6 +2230,7 @@ func _draw_node_rings() -> void:
 			or node.kind == PuzzleNode.Kind.DELAY
 			or node.kind == PuzzleNode.Kind.REPEATER
 			or node.kind == PuzzleNode.Kind.BOUNCE
+			or node.kind == PuzzleNode.Kind.ALTERNATING
 		):
 			continue
 
@@ -2843,93 +2808,65 @@ func _activate_alternating(
 	state: Dictionary,
 	arrivals: Array
 ) -> void:
-
 	if bool(state.get("broken", false)):
 		return
 
 	var options: Array[Dictionary] = _outgoing_links(uid)
-
 	if options.is_empty():
-		_record_node_failure(
-			uid,
-			"Alternating Node has no outgoing connection"
-		)
+		_record_node_failure(uid, "Alternating Node has no exit")
 		return
 
-	# Order two exits visually, upper before lower.
-	# Use screen positions, not square-grid directions.
+	# Sort by actual visual outgoing direction. Upper
+	# (NE on rhombus) is index 0, lower (SE) index 1.
+	# This order remains stable across all arrivals.
 	options.sort_custom(
 		func(a: Dictionary, b: Dictionary) -> bool:
-
 			var a_path: Array = a["path"]
 			var b_path: Array = b["path"]
-
-			var a_point: Vector2 = grid.cell_to_local(
-				a_path[1]
-			)
-
-			var b_point: Vector2 = grid.cell_to_local(
-				b_path[1]
-			)
-
-			if absf(a_point.y - b_point.y) > 0.001:
-				return a_point.y < b_point.y
-
+			var a_delta: Vector2 = (
+				grid.cell_to_local(a_path[1])
+				- grid.cell_to_local(a_path[0])
+			).normalized()
+			var b_delta: Vector2 = (
+				grid.cell_to_local(b_path[1])
+				- grid.cell_to_local(b_path[0])
+			).normalized()
+			if absf(a_delta.y - b_delta.y) > 0.0001:
+				return a_delta.y < b_delta.y
 			return str(a["to"]) < str(b["to"])
 	)
 
 	var cursor: int = int(state.get("cursor", 0))
 	var used: int = int(state.get("activations", 0))
-	var capacity: int = node.activation_cap
+	var cap: int = node.activation_cap
 
 	for arrival in arrivals:
-
-		# Capacity is the total number of signals
-		# that have been allowed through the node.
-		if used >= capacity:
-			_record_node_failure(
-				uid,
-				"Alternating Node capacity exhausted"
-			)
+		if used >= cap:
+			_record_node_failure(uid, "Alternating Node capacity exceeded")
 			return
 
 		var selected_index: int = 0
-
 		if options.size() > 1:
-
 			selected_index = (
-				node.alternating_first_branch + cursor
+				int(node.alternating_first_branch) + cursor
 			) % options.size()
 
-		_dispatch_pulse(
-			uid,
-			options[selected_index]
-		)
-
+		_dispatch_pulse(uid, options[selected_index])
 		if not running:
 			return
 
 		used += 1
 		cursor += 1
-
 		state["activations"] = used
 		state["cursor"] = cursor
 		state["last_tick"] = current_tick
 
-		# Display the NEXT selected branch.
+		# The highlighted route is the NEXT exit.
 		var next_index: int = 0
-
 		if options.size() > 1:
 			next_index = (
-				node.alternating_first_branch + cursor
+				int(node.alternating_first_branch) + cursor
 			) % options.size()
-
 		state["alternating_last_exit"] = next_index
-
-		node.set_test_display(
-			true,
-			used,
-			false
-		)
-
+		node.set_test_display(true, used, false)
 		node.set_alternating_display(next_index)
