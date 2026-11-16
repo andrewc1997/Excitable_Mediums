@@ -35,8 +35,8 @@ static func inspect(data: Dictionary) -> Dictionary:
 		elif kind == PuzzleNode.Kind.TARGET:
 			target_ids.append(uid)
 
-	if begin_ids.size() != 1:
-		errors.append("Exactly one Begin node is required (found %d)." % begin_ids.size())
+	if begin_ids.is_empty():
+		errors.append("At least one Begin node is required.")
 	if target_ids.is_empty():
 		errors.append("At least one Goal Target is required.")
 
@@ -66,23 +66,51 @@ static func inspect(data: Dictionary) -> Dictionary:
 		if int(nodes[to_uid].get("kind", -1)) == PuzzleNode.Kind.BEGIN:
 			errors.append("Connection points into Begin node %s." % to_uid)
 
+	# Union of reachable vertices from every Begin. This structural
+	# check does not assume every Begin must produce a winning run.
 	var visited: Dictionary = {}
-	if begin_ids.size() == 1:
-		var queue: Array[String] = [begin_ids[0]]
-		visited[begin_ids[0]] = true
-		var cursor: int = 0
-		while cursor < queue.size():
-			var current: String = queue[cursor]
-			cursor += 1
-			for neighbor in outgoing.get(current, []):
-				var next_uid: String = str(neighbor)
-				if not visited.has(next_uid):
-					visited[next_uid] = true
-					queue.append(next_uid)
+	var queue: Array[String] = []
+	for begin_id in begin_ids:
+		visited[begin_id] = true
+		queue.append(begin_id)
+
+	var cursor: int = 0
+	while cursor < queue.size():
+		var current: String = queue[cursor]
+		cursor += 1
+		for neighbor in outgoing.get(current, []):
+			var next_uid: String = str(neighbor)
+			if not visited.has(next_uid):
+				visited[next_uid] = true
+				queue.append(next_uid)
 
 	for uid in target_ids:
-		if not visited.has(uid) and begin_ids.size() == 1:
-			errors.append("Goal Target %s has no connection path from Begin." % uid)
+		if not visited.has(uid) and not begin_ids.is_empty():
+			errors.append("Goal Target %s has no path from any Begin." % uid)
+
+	# Decoy starts are permitted; warn only when a start has no
+	# graph route to a Goal at all. Simulation solvability is separate.
+	if begin_ids.size() > 1 and not target_ids.is_empty():
+		for begin_id in begin_ids:
+			var start_seen: Dictionary = {}
+			start_seen[begin_id] = true
+			var start_queue: Array[String] = [begin_id]
+			var start_cursor: int = 0
+			while start_cursor < start_queue.size():
+				var current: String = start_queue[start_cursor]
+				start_cursor += 1
+				for neighbor in outgoing.get(current, []):
+					var next_uid: String = str(neighbor)
+					if not start_seen.has(next_uid):
+						start_seen[next_uid] = true
+						start_queue.append(next_uid)
+			var reaches_goal: bool = false
+			for goal_id in target_ids:
+				if start_seen.has(goal_id):
+					reaches_goal = true
+					break
+			if not reaches_goal:
+				warnings.append("Begin node %s has no path to a Goal (possibly intentional)." % begin_id)
 
 	for uid in nodes.keys():
 		var entry: Dictionary = nodes[uid]
@@ -92,7 +120,7 @@ static func inspect(data: Dictionary) -> Dictionary:
 		var degree: int = outputs_count + inputs_count
 		if degree == 0:
 			warnings.append("%s is isolated (no connections)." % uid)
-		elif not visited.has(uid) and begin_ids.size() == 1:
+		elif not visited.has(uid) and not begin_ids.is_empty():
 			warnings.append("%s is in a disconnected section of the grid." % uid)
 
 		if kind == PuzzleNode.Kind.BEGIN and outputs_count == 0:

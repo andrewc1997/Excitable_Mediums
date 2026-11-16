@@ -110,6 +110,7 @@ var timeline_slider: HSlider
 var timeline_label: Label
 
 var previous_ui_visibility: Dictionary = {}
+var previous_grid_visibility: bool = true
 
 var timeline: Array[Dictionary] = []
 var timeline_cursor: int = -1
@@ -283,6 +284,12 @@ func enter_test_mode() -> void:
 
 	previous_ui_visibility.clear()
 
+	# The grid shows every possible honeycomb edge during editing.
+	# In playtest we only draw actual BuilderConnections.
+	# Hiding Grid does not disable its coordinate/routing methods.
+	previous_grid_visibility = grid.visible
+	grid.hide()
+
 	for name in [
 		"LevelToolbar",
 		"NodePalette",
@@ -312,12 +319,12 @@ func enter_test_mode() -> void:
 
 	if builder.nodes_by_id.is_empty():
 		_set_status("No nodes placed.")
-	elif _get_begin_node_id().is_empty():
-		_set_status("Place exactly one Begin Node.")
+	elif not _has_begin_nodes():
+		_set_status("Place at least one Begin Node.")
 	elif targets_total == 0:
 		_set_status("Add at least one Goal Target.")
 	else:
-		_set_status("Click the Begin Node to launch.")
+		_set_status("Click any Begin Node to launch from that start.")
 
 
 func exit_test_mode() -> void:
@@ -337,6 +344,9 @@ func exit_test_mode() -> void:
 	test_mode = false
 	visible = false
 	test_bar.hide()
+
+	# Restore the Builder's full grid when editing resumes.
+	grid.visible = previous_grid_visibility
 
 	for name in previous_ui_visibility.keys():
 
@@ -514,7 +524,7 @@ func _replay() -> void:
 	):
 		_start_from(start_id)
 	else:
-		_set_status("Click the Begin Node.")
+		_set_status("Click a Begin Node to choose your starting point.")
 
 
 # ============================================================
@@ -579,10 +589,7 @@ func _input(event: InputEvent) -> void:
 
 		var uid: String = builder.get_id_at_cell(cell)
 
-		if (
-			not uid.is_empty()
-			and uid == _get_begin_node_id()
-		):
+		if _is_begin_node_id(uid):
 			_start_from(uid)
 			get_viewport().set_input_as_handled()
 
@@ -591,29 +598,23 @@ func _input(event: InputEvent) -> void:
 # BEGIN NODE
 # ============================================================
 
-func _get_begin_node_id() -> String:
-
-	var start_id: String = ""
-
+func _has_begin_nodes() -> bool:
 	for key in builder.nodes_by_id.keys():
+		if _is_begin_node_id(str(key)):
+			return true
+	return false
 
-		var uid: String = str(key)
-		var node: PuzzleNode = builder.nodes_by_id[uid]
 
-		if node.kind != PuzzleNode.Kind.BEGIN:
-			continue
-
-		if not start_id.is_empty():
-			return ""
-
-		start_id = uid
-
-	return start_id
+func _is_begin_node_id(uid: String) -> bool:
+	if uid.is_empty() or not builder.nodes_by_id.has(uid):
+		return false
+	var node: PuzzleNode = builder.nodes_by_id[uid]
+	return node.kind == PuzzleNode.Kind.BEGIN
 
 
 func _start_from(uid: String) -> void:
 
-	if uid.is_empty() or uid != _get_begin_node_id():
+	if not _is_begin_node_id(uid):
 		_set_status("Only Begin can launch signals.")
 		return
 

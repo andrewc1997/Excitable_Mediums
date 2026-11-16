@@ -1,4 +1,3 @@
-
 @tool
 class_name SquarePuzzleGrid
 extends PuzzleGridBase
@@ -14,10 +13,10 @@ extends PuzzleGridBase
 
 @export_category("Grid Geometry")
 
-@export_enum("Square", "Horizontal Rhombus")
+@export_enum("Square", "Horizontal Rhombus", "Honeycomb")
 var grid_type: int = 0:
 	set(value):
-		grid_type = clampi(value, 0, 1)
+		grid_type = clampi(value, 0, 2)
 		queue_redraw()
 
 @export_range(20.0, 160.0, 1.0)
@@ -68,6 +67,10 @@ func is_rhombus() -> bool:
 	return grid_type == 1
 
 
+func is_honeycomb() -> bool:
+	return grid_type == 2
+
+
 # ============================================================
 # SPECIAL LEFT TERMINAL
 #
@@ -95,6 +98,22 @@ func is_left_terminal(cell: Vector2i) -> bool:
 
 func cell_to_local(cell: Vector2i) -> Vector2:
 
+	if is_honeycomb():
+		# Two honeycomb vertices per pair: A (even x) and B (odd x).
+		# This is a regular flat-top hexagonal lattice, NOT a square overlay.
+		var pair_index: int = floori(float(cell.x) / 2.0)
+		var vertex_type: int = posmod(cell.x, 2)
+		var row_offset: float = 1.5 * float(posmod(cell.y, 2))
+		var px: float = (
+			3.0 * float(pair_index)
+			+ row_offset
+			+ float(vertex_type)
+		) * cell_size
+		var py: float = (
+			float(cell.y) * sqrt(3.0) * 0.5 * cell_size
+		)
+		return Vector2(px, py)
+
 	if not is_rhombus():
 		return Vector2(
 			float(cell.x) * cell_size,
@@ -121,6 +140,25 @@ func cell_to_local(cell: Vector2i) -> Vector2:
 
 
 func local_to_cell(point: Vector2) -> Vector2i:
+
+	if is_honeycomb():
+		# Brute-force nearest junction: at most 40x40 candidates.
+		# Deliberately refuse clicks in the middle of a hexagonal face.
+		var best_cell := Vector2i(-1, -1)
+		var best_distance_sq: float = INF
+		for y in range(grid_rows):
+			for x in range(grid_columns):
+				var candidate := Vector2i(x, y)
+				var distance_sq: float = point.distance_squared_to(
+					cell_to_local(candidate)
+				)
+				if distance_sq < best_distance_sq:
+					best_distance_sq = distance_sq
+					best_cell = candidate
+		var snap_radius: float = cell_size * 0.60
+		if best_distance_sq > snap_radius * snap_radius:
+			return Vector2i(-1, -1)
+		return best_cell
 
 	if not is_rhombus():
 		return Vector2i(
@@ -205,6 +243,15 @@ func is_valid_cell(cell: Vector2i) -> bool:
 
 func get_grid_pixel_size() -> Vector2:
 
+	if is_honeycomb():
+		var largest := Vector2.ZERO
+		for y in range(grid_rows):
+			for x in range(grid_columns):
+				var point: Vector2 = cell_to_local(Vector2i(x, y))
+				largest.x = maxf(largest.x, point.x)
+				largest.y = maxf(largest.y, point.y)
+		return largest
+
 	if not is_rhombus():
 		return Vector2(
 			float(grid_columns - 1) * cell_size,
@@ -222,6 +269,9 @@ func get_grid_pixel_size() -> Vector2:
 
 
 func get_grid_center() -> Vector2:
+
+	if is_honeycomb():
+		return get_grid_pixel_size() * 0.5
 
 	if not is_rhombus():
 		return get_grid_pixel_size() * 0.5
@@ -244,6 +294,20 @@ func get_neighbors(
 	var result: Array[Vector2i] = []
 
 	if not is_valid_cell(cell):
+		return result
+
+	if is_honeycomb():
+		# Every interior junction has exactly three graph neighbours:
+		# one horizontal partner and two angled edges (above/below).
+		var horizontal_x: int = cell.x + 1 if cell.x % 2 == 0 else cell.x - 1
+		var diagonal_x: int = cell.x - 1 if cell.y % 2 == 0 else cell.x + 1
+		for candidate in [
+			Vector2i(horizontal_x, cell.y),
+			Vector2i(diagonal_x, cell.y - 1),
+			Vector2i(diagonal_x, cell.y + 1)
+		]:
+			if is_valid_cell(candidate):
+				result.append(candidate)
 		return result
 
 	# The terminal has exactly one exit.
@@ -279,7 +343,9 @@ func are_neighbors(
 
 func _draw() -> void:
 
-	if is_rhombus():
+	if is_honeycomb():
+		_draw_honeycomb()
+	elif is_rhombus():
 		_draw_rhombus()
 	else:
 		_draw_square()
@@ -382,6 +448,43 @@ func _draw_rhombus() -> void:
 		GRID_DOT_RADIUS,
 		axis_color
 	)
+
+
+# ============================================================
+# HONEYCOMB: DRAW ONLY THE ACTUAL GRAPH EDGES
+# ============================================================
+
+func _draw_honeycomb() -> void:
+	for y in range(grid_rows):
+		for x in range(grid_columns):
+			var cell := Vector2i(x, y)
+			var origin: Vector2 = cell_to_local(cell)
+			for neighbor in get_neighbors(cell):
+				# Each undirected lattice edge is drawn once.
+				if neighbor.y > y or (neighbor.y == y and neighbor.x > x):
+					draw_line(
+						origin,
+						cell_to_local(neighbor),
+						grid_color,
+						line_width,
+						true
+					)
+			draw_circle(origin, GRID_DOT_RADIUS, axis_color)
+
+
+# ============================================================
+# HONEYCOMB: ONE OF SIX ON-SCREEN DIRECTIONS
+# ============================================================
+
+func _honey_direction_index(a: Vector2i, b: Vector2i) -> int:
+	var delta: Vector2 = cell_to_local(b) - cell_to_local(a)
+	if delta.length_squared() < 0.001:
+		return -1
+	if absf(delta.y) < 0.001:
+		return 0 if delta.x > 0.0 else 3
+	if delta.y > 0.0:
+		return 1 if delta.x > 0.0 else 2
+	return 5 if delta.x > 0.0 else 4
 
 
 # ============================================================
@@ -491,9 +594,11 @@ func get_connection_path(
 				next_cell - current_cell
 			)
 
-			var direction_index: int = (
-				DIRECTIONS.find(change)
-			)
+			var direction_index: int = -1
+			if is_honeycomb():
+				direction_index = _honey_direction_index(current_cell, next_cell)
+			else:
+				direction_index = DIRECTIONS.find(change)
 
 			if direction_index < 0:
 				continue
@@ -564,6 +669,11 @@ func simplify_path(
 	cells: Array[Vector2i]
 ) -> Array[Vector2i]:
 
+	# Honeycomb paths must keep every real intermediate vertex.
+	# Skipping vertices would make path length and routing invalid.
+	if is_honeycomb():
+		return cells
+
 	var result: Array[Vector2i] = []
 
 	if cells.size() < 2:
@@ -595,6 +705,17 @@ func get_path_cells(
 ) -> Array[Vector2i]:
 
 	var result: Array[Vector2i] = []
+
+	if is_honeycomb():
+		if path.size() < 2:
+			return result
+		for i in range(path.size() - 1):
+			if not are_neighbors(path[i], path[i + 1]):
+				return []
+			if i == 0:
+				result.append(path[i])
+			result.append(path[i + 1])
+		return result
 
 	if path.size() < 2:
 		return result
@@ -697,6 +818,17 @@ func get_port_direction(
 	var difference: Vector2i = to_cell - from_cell
 
 	if difference == Vector2i.ZERO:
+		return ""
+
+	if is_honeycomb():
+		var direction: int = _honey_direction_index(from_cell, to_cell)
+		match direction:
+			0: return "east"
+			1: return "south_east"
+			2: return "south_west"
+			3: return "west"
+			4: return "north_west"
+			5: return "north_east"
 		return ""
 
 	if is_rhombus():

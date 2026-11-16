@@ -16,7 +16,7 @@ const NODE_SCENE: PackedScene = preload(
 
 const DESIGN_VALIDATOR = preload("res://scripts/builder/test/level_design_validator.gd")
 
-const FORMAT_VERSION: int = 6
+const FORMAT_VERSION: int = 7
 const SAVE_PATH: String = "user://excitable_level.json"
 
 const MAX_GRID_SIZE: int = 40
@@ -78,15 +78,11 @@ func _initialize_level_tools() -> void:
 	var live_grid := grid as SquarePuzzleGrid
 
 	if live_grid != null:
-
-		selected_grid_type = (
-			"rhombus" if live_grid.is_rhombus()
-			else "square"
-		)
-
-		grid_type_selector.select(
-			1 if live_grid.is_rhombus() else 0
-		)
+		match live_grid.grid_type:
+			1: selected_grid_type = "rhombus"
+			2: selected_grid_type = "honeycomb"
+			_: selected_grid_type = "square"
+		grid_type_selector.select(live_grid.grid_type)
 
 	apply_grid_size(12)
 
@@ -128,7 +124,6 @@ func create_toolbar() -> void:
 	grid_type_selector.add_item("Square Grid", 0)
 	grid_type_selector.add_item("Horizontal Rhombus", 1)
 	grid_type_selector.add_item("Honeycomb Grid", 2)
-	grid_type_selector.set_item_disabled(2, true)
 
 	grid_type_selector.select(0)
 	grid_type_selector.item_selected.connect(
@@ -197,54 +192,35 @@ func add_toolbar_button(
 # ============================================================
 
 func _on_grid_type_selected(index: int) -> void:
-
-	var live_grid := grid as SquarePuzzleGrid
-
+	var live_grid: SquarePuzzleGrid = grid as SquarePuzzleGrid
 	if live_grid == null:
 		status_label.text = "Incorrect Grid script."
 		return
 
-	if index < 0 or index > 1:
-
+	if index < 0 or index > 2:
 		grid_type_selector.select(live_grid.grid_type)
-		status_label.text = "Honeycomb not implemented."
 		return
 
 	if index == live_grid.grid_type:
 		return
 
-	if (
-		not builder.nodes_by_id.is_empty()
-		or not builder.connection_layer.connections.is_empty()
-	):
-
+	# Do not reinterpret existing node coordinates on another lattice.
+	if not builder.nodes_by_id.is_empty() or not builder.connection_layer.connections.is_empty():
 		grid_type_selector.select(live_grid.grid_type)
-
-		status_label.text = (
-			"Clear the level before changing grid type."
-		)
+		status_label.text = "Clear the level before changing grid type."
 		return
 
 	live_grid.set_grid_type(index)
-
-	selected_grid_type = (
-		"rhombus" if index == 1 else "square"
-	)
+	match index:
+		1: selected_grid_type = "rhombus"
+		2: selected_grid_type = "honeycomb"
+		_: selected_grid_type = "square"
 
 	live_grid.queue_redraw()
 	builder.connection_layer.refresh_connections()
-
 	centre_grid_camera()
+	status_label.text = "Grid changed to %s." % grid_type_selector.get_item_text(index)
 
-	status_label.text = (
-		"Grid changed to %s."
-		% grid_type_selector.get_item_text(index)
-	)
-
-
-# ============================================================
-# GRID RESIZING
-# ============================================================
 
 func _on_decrease_grid_pressed() -> void:
 
@@ -710,7 +686,7 @@ func open_code_dialog(
 
 	if mode == "export":
 
-		dialog_title.text = "Share Level Code — EM6"
+		dialog_title.text = "Share Level Code — %s" % export_code.get_slice("-", 0)
 		code_field.editable = false
 		code_field.text = export_code
 
@@ -721,7 +697,7 @@ func open_code_dialog(
 	else:
 
 		dialog_title.text = (
-			"Import Level Code — EM1 through EM6"
+			"Import Level Code — EM1 through EM7"
 		)
 
 		code_field.editable = true
@@ -840,7 +816,8 @@ func export_level_data() -> Dictionary:
 		})
 
 	return {
-		"version": FORMAT_VERSION,
+		# Preserve EM6 codes for Square/Rhombus; Honeycomb uses EM7.
+		"version": 7 if selected_grid_type == "honeycomb" else 6,
 		"grid_type": selected_grid_type,
 		"columns": grid.grid_columns,
 		"rows": grid.grid_rows,
@@ -912,6 +889,7 @@ func decode_level(code: String) -> Dictionary:
 		"EM4": version = 4
 		"EM5": version = 5
 		"EM6": version = 6
+		"EM7": version = 7
 		_:
 			return {"error": "Unsupported code version."}
 
@@ -1029,6 +1007,18 @@ func _valid_cell_data(
 
 
 # ============================================================
+# HONEYCOMB PATH VALIDATION (WORKS BEFORE THE GRID IS LOADED)
+# ============================================================
+
+func _honeycomb_cells_are_neighbors(a: Vector2i, b: Vector2i) -> bool:
+	if a.y == b.y:
+		return b.x == (a.x + 1 if a.x % 2 == 0 else a.x - 1)
+	if absi(b.y - a.y) != 1:
+		return false
+	return b.x == (a.x - 1 if a.y % 2 == 0 else a.x + 1)
+
+
+# ============================================================
 # VALIDATE LEVEL
 # ============================================================
 
@@ -1050,8 +1040,12 @@ func validate_level(data: Dictionary) -> String:
 	if (
 		saved_type != "square"
 		and saved_type != "rhombus"
+		and saved_type != "honeycomb"
 	):
 		return "Unsupported grid type."
+
+	if saved_type == "honeycomb" and version < 7:
+		return "Honeycomb requires EM7 format."
 
 	if not _valid_int(
 		data.get("columns", null),
@@ -1093,8 +1087,6 @@ func validate_level(data: Dictionary) -> String:
 	var ids: Dictionary = {}
 	var occupied: Dictionary = {}
 	var begin_ids: Dictionary = {}
-
-	var begin_count: int = 0
 
 	# ----------------------------------------------------
 	# NODES
@@ -1152,7 +1144,7 @@ func validate_level(data: Dictionary) -> String:
 			5:
 				max_kind = PuzzleNode.Kind.ONE_WAY_GATE
 
-			6:
+			6, 7:
 				max_kind = PuzzleNode.Kind.BEGIN
 
 		if not _valid_int(
@@ -1239,12 +1231,7 @@ func validate_level(data: Dictionary) -> String:
 				return "Invalid Alternating starting branch."
 
 		if int(entry["kind"]) == PuzzleNode.Kind.BEGIN:
-
-			begin_count += 1
 			begin_ids[uid] = true
-
-			if begin_count > 1:
-				return "Only one Begin Node is permitted."
 
 		ids[uid] = cell
 		occupied[cell] = uid
@@ -1346,12 +1333,12 @@ func validate_level(data: Dictionary) -> String:
 				end_cell - start_cell
 			)
 
-			# One logical lattice direction per
-			# segment, no hidden diagonal jumps.
-			if (
-				difference.x != 0
-				and difference.y != 0
-			):
+			# Honeycomb uses actual vertex-to-vertex diagonal edges.
+			# Square and Rhombus retain their original axis-aligned rule.
+			if saved_type == "honeycomb":
+				if not _honeycomb_cells_are_neighbors(start_cell, end_cell):
+					return "Path leaves the honeycomb lattice."
+			elif difference.x != 0 and difference.y != 0:
 				return "Path leaves the visible lattice."
 
 			var distance: int = maxi(
@@ -1452,14 +1439,12 @@ func apply_level_data(data: Dictionary) -> void:
 	var live_grid := grid as SquarePuzzleGrid
 
 	if live_grid != null:
-
-		if saved_type == "rhombus":
-			live_grid.set_grid_type(1)
-			grid_type_selector.select(1)
-
-		else:
-			live_grid.set_grid_type(0)
-			grid_type_selector.select(0)
+		var selected_index: int = 0
+		match saved_type:
+			"rhombus": selected_index = 1
+			"honeycomb": selected_index = 2
+		live_grid.set_grid_type(selected_index)
+		grid_type_selector.select(selected_index)
 
 	selected_grid_type = saved_type
 
@@ -1678,7 +1663,7 @@ func _on_save_pressed() -> void:
 	file.store_string(JSON.stringify(data))
 	file.close()
 
-	status_label.text = "EM6 level saved."
+	status_label.text = "EM%d level saved." % int(data["version"])
 
 
 # ============================================================

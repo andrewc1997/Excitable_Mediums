@@ -470,15 +470,8 @@ func handle_left_press(shift_held: bool) -> void:
 
 func place_node(cell: Vector2i, kind: int) -> void:
 
-	# Only one Begin Node is allowed.
-	if kind == PuzzleNode.Kind.BEGIN:
-		for existing_node in nodes_by_id.values():
-			var puzzle_node: PuzzleNode = existing_node
-
-			if puzzle_node.kind == PuzzleNode.Kind.BEGIN:
-				print("Only one Begin Node is permitted.")
-				return
-
+	# Multiple Begin Nodes are permitted. In test mode,
+	# the player chooses which Begin Node to launch.
 
 	if not grid.is_valid_cell(cell):
 		return
@@ -863,6 +856,13 @@ func create_connection(
 	if from_id == to_id:
 		return
 
+	# Begin Nodes only launch signals and cannot be destinations.
+	# Check BEFORE modifying the connection list.
+	var destination: PuzzleNode = nodes_by_id[to_id]
+	if destination.kind == PuzzleNode.Kind.BEGIN:
+		print("Cannot connect into a Begin Node.")
+		return
+
 	# Prevent duplicate edges in either direction.
 	for connection in connection_layer.connections:
 
@@ -899,14 +899,6 @@ func create_connection(
 
 	connection_layer.connections = proposed_paths
 	connection_layer.refresh_connections()
-
-
-	# Begin Nodes cannot receive incoming connections.
-	var destination: PuzzleNode = nodes_by_id[to_id]
-
-	if destination.kind == PuzzleNode.Kind.BEGIN:
-		print("Cannot connect into a Begin Node.")
-		return
 
 
 # ============================================================

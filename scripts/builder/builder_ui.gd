@@ -332,17 +332,8 @@ func _on_kind_changed(index: int) -> void:
 
 	var node: PuzzleNode = builder.nodes_by_id[selected_uid]
 
+	# Multiple Begin Nodes are allowed, but they cannot have inputs.
 	if index == PuzzleNode.Kind.BEGIN:
-		for uid in builder.nodes_by_id.keys():
-			if uid == selected_uid:
-				continue
-
-			var other: PuzzleNode = builder.nodes_by_id[uid]
-
-			if other.kind == PuzzleNode.Kind.BEGIN:
-				show_selected_node(selected_uid)
-				return
-
 		for connection in builder.connection_layer.connections:
 			if str(connection["to_uid"]) == selected_uid:
 				show_selected_node(selected_uid)
