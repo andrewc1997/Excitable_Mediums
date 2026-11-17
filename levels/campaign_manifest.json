@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "levels": [
+    {
+      "id": "level_001",
+      "title": "First Connection",
+      "description": "Introduce Begin nodes and targets.",
+      "path": "res://levels/level_001.json"
+    },
+    {
+      "id": "level_002",
+      "title": "The Second Lap",
+      "description": "Learn splitters and loops.",
+      "path": "res://levels/level_002_loop.json"
+    },
+    {
+      "id": "level_003",
+      "title": "Point of No Return",
+      "description": "Time a drag-and-drop bridge blocker.",
+      "path": "res://levels/level_003_point_of_no_return.json"
+    }
+  ]
+}

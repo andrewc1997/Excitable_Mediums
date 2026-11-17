@@ -1,6 +1,7 @@
 extends Node2D
 
 const PortRules = preload("res://scripts/puzzle_node/puzzle_port_rules.gd")
+const CampaignManagerScript = preload("res://scripts/player/campaign_manager.gd")
 
 # ============================================================
 # EXCITABLE MEDIUMS - CLEAN STANDALONE PLAYER MODE
@@ -28,10 +29,11 @@ const PortRules = preload("res://scripts/puzzle_node/puzzle_port_rules.gd")
 @export_category("Level Setup")
 @export_file("*.tscn") var builder_scene_path: String = "res://scenes/builder/builder.tscn"
 @export_file("*.json") var level_file_path: String = "res://levels/level_001.json"
+# Kept to preserve older PlayerMode scene Inspector data. Campaign order
+# now comes from res://levels/campaign_manifest.json, NOT this property.
 @export_file("*.json") var next_level_path: String = "res://levels/level_002_loop.json"
-
-const LEVEL_002_PATH: String = "res://levels/level_002_loop.json"
-const LEVEL_003_PATH: String = "res://levels/level_003_point_of_no_return.json"
+@export var resume_campaign_on_start: bool = true
+@export var developer_allow_locked_levels: bool = false
 
 @export_category("Screen Framing")
 @export_range(0.0, 200.0, 1.0) var screen_margin: float = 44.0
@@ -63,6 +65,7 @@ const LEVEL_003_PATH: String = "res://levels/level_003_point_of_no_return.json"
 @export_range(0.1, 4.0, 0.1) var puzzle_fade_out_seconds: float = 1.8
 @export_range(0.1, 4.0, 0.1) var puzzle_fade_in_seconds: float = 1.8
 
+var campaign_manager: Node
 var builder: Node2D
 var test_level: Node2D
 var level_tools: Node
@@ -105,15 +108,29 @@ var blocker_notice: Label
 var blocker_notice_tween: Tween
 var blocker_return_tween: Tween
 
+# Campaign menu is deliberately modal: no permanent top bar.
+var level_select_layer: CanvasLayer
+var level_select_list: VBoxContainer
+var level_select_summary: Label
+var level_select_paused_by_menu: bool = false
+
 
 # ============================================================
 # STARTUP
 # ============================================================
 
 func _ready() -> void:
+	# Own the campaign state centrally without changing the scene tree
+	# manually. If an Autoload already exists, reuse it.
+	campaign_manager = get_node_or_null("/root/CampaignManager")
+	if campaign_manager == null:
+		campaign_manager = CampaignManagerScript.new()
+		campaign_manager.name = "CampaignManager"
+		get_tree().root.add_child(campaign_manager)
 	_create_pause_overlay()
 	_create_result_overlay()
 	_create_bridge_blocker_inventory()
+	_create_level_select_overlay()
 	get_viewport().size_changed.connect(_request_level_fit)
 	call_deferred("_boot")
 
@@ -157,11 +174,38 @@ func _boot() -> void:
 		_show_setup_error("Builder LevelTools or TestLevel failed to initialise.")
 		return
 
-	_load_level(level_file_path)
+	_load_level(_resolve_startup_level_path())
+
+
+func _resolve_startup_level_path() -> String:
+	var requested: String = level_file_path.strip_edges()
+	if campaign_manager == null:
+		return requested
+	var levels: Array = campaign_manager.call("get_all_levels")
+	if levels.is_empty():
+		return requested
+	var first_path: String = str(levels[0].get("path", ""))
+	var resume: String = str(campaign_manager.call("get_resume_path"))
+	if requested.is_empty():
+		return resume
+	# Developer sandboxes (e.g. Wormhole tests) remain independent of
+	# unlocks and never get redirected into the campaign.
+	if not bool(campaign_manager.call("is_campaign_path", requested)):
+		return requested
+	if resume_campaign_on_start and requested == first_path:
+		return resume
+	# A different path explicitly selected in the Inspector is a
+	# developer test override. Do not break existing Level 003 testing.
+	return requested
 
 
 func _process(_delta: float) -> void:
 	if not ready_to_play or not is_instance_valid(test_level) or transitioning:
+		return
+
+	if level_select_layer != null and level_select_layer.visible:
+		pause_layer.hide()
+		blocker_layer.hide()
 		return
 
 	_update_interactable_node_hover(_delta)
@@ -277,36 +321,24 @@ func _load_level(path: String, preserve_background: bool = false) -> bool:
 
 
 func _level_name(path: String) -> String:
-	if path.get_file() == "level_001.json":
-		return "LEVEL 001 - First Connection"
-	if path.get_file() == "level_002_loop.json":
-		return "LEVEL 002 - The Second Lap"
-	if path.get_file() == "level_003_point_of_no_return.json":
-		return "LEVEL 003 - The Point of No Return"
+	if campaign_manager != null:
+		var entry: Dictionary = campaign_manager.call("get_entry_by_path", path)
+		if not entry.is_empty():
+			return "%s - %s" % [
+				str(entry["id"]).replace("_", " ").to_upper(),
+				str(entry["title"])
+			]
 	return path.get_file().get_basename().replace("_", " ").capitalize()
 
 
 # ============================================================
-# LEVEL PROGRESSION
+# LEVEL PROGRESSION - MANIFEST DRIVEN, NO HARDCODED PATHS
 # ============================================================
 
 func _get_next_level_path() -> String:
-	# Keep the first three tutorial levels in a known sequence. The
-	# manually-built PlayerMode scene can retain an older Inspector
-	# Next Level value (usually Level 002), so do not loop backwards.
-	match level_file_path.get_file():
-		"level_001.json":
-			return LEVEL_002_PATH
-		"level_002_loop.json":
-			return LEVEL_003_PATH
-		"level_003_point_of_no_return.json":
-			return ""
-
-	# Other/custom campaign levels can still use the Inspector override.
-	var configured: String = next_level_path.strip_edges()
-	if configured.is_empty() or configured == level_file_path:
+	if campaign_manager == null:
 		return ""
-	return configured
+	return str(campaign_manager.call("get_next_level_path", level_file_path))
 
 
 func _next_level() -> void:
@@ -530,10 +562,7 @@ func _run_level_transition(path: String, wait_for_completion: bool) -> void:
 	if not is_inside_tree():
 		return
 	_fit_level_to_screen()
-	if path == LEVEL_002_PATH:
-		next_level_path = LEVEL_003_PATH
-	elif path == LEVEL_003_PATH:
-		next_level_path = ""
+	# CampaignManager owns progression. No per-level Inspector edits.
 
 	# Explicitly reset transparency on the new nodes and bridges
 	# before starting the two sequential fade-in stages.
@@ -889,6 +918,15 @@ func _input(event: InputEvent) -> void:
 	if not ready_to_play or not is_instance_valid(test_level) or transitioning:
 		return
 
+	# The level selector captures input while open. Simulation is paused
+	# on entry, so no switches/blocker placements happen underneath it.
+	if level_select_layer != null and level_select_layer.visible:
+		if event is InputEventKey and event.pressed and not event.echo:
+			if event.keycode == KEY_ESCAPE or event.keycode == KEY_L:
+				_close_level_select()
+				get_viewport().set_input_as_handled()
+		return
+
 	# Player drops blockers on authored bridge slots, including while
 	# pulses are moving. Already in-flight pulses complete as normal.
 	if blocker_dragging:
@@ -918,6 +956,9 @@ func _input(event: InputEvent) -> void:
 		if not event.pressed or event.echo:
 			return
 		match event.keycode:
+			KEY_L:
+				_open_level_select()
+				get_viewport().set_input_as_handled()
 			KEY_SPACE, KEY_ESCAPE:
 				if not result_layer.visible:
 					_toggle_pause()
@@ -1168,6 +1209,10 @@ func _show_final_result() -> void:
 	var reason: String = str(test_level.get("failure_reason"))
 
 	if success:
+		# Persist immediately, BEFORE asking the manager for the next
+		# unlocked level. Custom/sandbox levels are ignored by the manager.
+		if campaign_manager != null:
+			campaign_manager.call("mark_level_completed", level_file_path, tick)
 		result_heading.text = "PUZZLE COMPLETED"
 		result_description.text = (
 			_level_name(level_file_path)
@@ -1269,6 +1314,7 @@ func _create_pause_overlay() -> void:
 	_make_button(row, "Resume", _toggle_pause)
 	_make_button(row, "Retry", _retry)
 	_make_button(row, "Adjust Switches / Choose Start", _reset_to_begin_selection)
+	_make_button(row, "Levels", _open_level_select)
 	pause_layer.hide()
 
 
@@ -1324,4 +1370,160 @@ func _create_result_overlay() -> void:
 	result_next_button = _make_button(row, "Next Level", _next_level)
 	result_retry_button = _make_button(row, "Retry Same Start", _retry)
 	result_reset_button = _make_button(row, "Adjust Switches / Choose Start", _reset_to_begin_selection)
+	_make_button(row, "Levels", _open_level_select)
 	result_layer.hide()
+
+
+# ============================================================
+# CAMPAIGN LEVEL SELECTION - RUNTIME UI, NO EXTRA .TSCN
+# Press L, or use "Levels" from Pause / Result.
+# ============================================================
+
+func _create_level_select_overlay() -> void:
+	level_select_layer = CanvasLayer.new()
+	level_select_layer.name = "CampaignLevelSelect"
+	level_select_layer.layer = 240
+	add_child(level_select_layer)
+
+	var shade := ColorRect.new()
+	shade.color = Color(0.02, 0.06, 0.13, 0.82)
+	shade.mouse_filter = Control.MOUSE_FILTER_STOP
+	level_select_layer.add_child(shade)
+	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
+
+	var center := CenterContainer.new()
+	level_select_layer.add_child(center)
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(520.0, 430.0)
+	center.add_child(panel)
+
+	var margin := MarginContainer.new()
+	for side in ["margin_left", "margin_right", "margin_top", "margin_bottom"]:
+		margin.add_theme_constant_override(side, 20)
+	panel.add_child(margin)
+
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 12)
+	margin.add_child(column)
+
+	var heading := Label.new()
+	heading.text = "SELECT A LEVEL"
+	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	heading.add_theme_font_size_override("font_size", 26)
+	column.add_child(heading)
+
+	level_select_summary = Label.new()
+	level_select_summary.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	column.add_child(level_select_summary)
+
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(480.0, 285.0)
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	column.add_child(scroll)
+
+	level_select_list = VBoxContainer.new()
+	level_select_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	level_select_list.add_theme_constant_override("separation", 8)
+	scroll.add_child(level_select_list)
+
+	var footer := HBoxContainer.new()
+	footer.alignment = BoxContainer.ALIGNMENT_CENTER
+	column.add_child(footer)
+	_make_button(footer, "Back to Puzzle  (L / Esc)", _close_level_select)
+
+	level_select_layer.hide()
+
+
+func _refresh_level_select() -> void:
+	if campaign_manager == null or level_select_list == null:
+		return
+	for child in level_select_list.get_children():
+		level_select_list.remove_child(child)
+		child.queue_free()
+
+	var levels: Array = campaign_manager.call("get_all_levels")
+	var completed_count: int = int(campaign_manager.call("get_completed_count"))
+	level_select_summary.text = "%d / %d completed" % [completed_count, levels.size()]
+
+	for entry_value in levels:
+		var entry: Dictionary = entry_value
+		var path: String = str(entry.get("path", ""))
+		var unlocked: bool = bool(campaign_manager.call("is_level_unlocked", path))
+		var selectable: bool = unlocked or developer_allow_locked_levels
+		var finished: bool = bool(campaign_manager.call("is_level_completed", path))
+		var file_exists: bool = FileAccess.file_exists(path)
+		var best: int = int(campaign_manager.call("get_best_ticks", path))
+
+		var level_id: String = str(entry.get("id", ""))
+		var display_number: String = level_id.replace("level_", "")
+		var label: String = "%s   %s" % [display_number, str(entry.get("title", level_id))]
+		if finished:
+			label += "    ✓ Completed"
+			if best >= 0:
+				label += " (%d ticks)" % best
+		elif not unlocked:
+			label += "    🔒 Locked"
+		elif not file_exists:
+			label += "    [JSON missing]"
+		else:
+			label += "    Ready"
+		if path == level_file_path:
+			label += "    • Current"
+
+		var button := Button.new()
+		button.text = label
+		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		button.custom_minimum_size = Vector2(460.0, 44.0)
+		button.disabled = not selectable or not file_exists
+		button.tooltip_text = str(entry.get("description", ""))
+		button.pressed.connect(_select_campaign_level.bind(path))
+		level_select_list.add_child(button)
+
+	if levels.is_empty():
+		var notice := Label.new()
+		notice.text = "No campaign levels found. Check levels/campaign_manifest.json."
+		level_select_list.add_child(notice)
+
+
+func _open_level_select() -> void:
+	if not ready_to_play or transitioning or level_select_layer.visible:
+		return
+	level_select_paused_by_menu = false
+	if is_instance_valid(test_level):
+		if bool(test_level.get("running")) and not bool(test_level.get("paused")) and not bool(test_level.get("finished")):
+			test_level._toggle_pause()
+			level_select_paused_by_menu = true
+	_refresh_level_select()
+	pause_layer.hide()
+	blocker_layer.hide()
+	level_select_layer.show()
+
+
+func _close_level_select() -> void:
+	if not level_select_layer.visible:
+		return
+	level_select_layer.hide()
+	if level_select_paused_by_menu and is_instance_valid(test_level):
+		if bool(test_level.get("paused")) and not bool(test_level.get("finished")):
+			test_level._toggle_pause()
+	level_select_paused_by_menu = false
+
+
+func _select_campaign_level(path: String) -> void:
+	if transitioning or campaign_manager == null:
+		return
+	if not developer_allow_locked_levels:
+		if not bool(campaign_manager.call("is_level_unlocked", path)):
+			return
+	if not FileAccess.file_exists(path):
+		return
+
+	# Do NOT resume the outgoing level; we are about to replace it.
+	level_select_layer.hide()
+	level_select_paused_by_menu = false
+	pause_layer.hide()
+	result_layer.hide()
+	transitioning = true
+	call_deferred("_run_level_transition", path, false)
