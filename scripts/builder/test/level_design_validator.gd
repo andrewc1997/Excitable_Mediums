@@ -14,6 +14,7 @@ static func inspect(data: Dictionary) -> Dictionary:
 	var target_ids: Array[String] = []
 	var node_records: Array = data.get("nodes", [])
 	var connection_records: Array = data.get("connections", [])
+	var two_way: bool = bool(data.get("allow_reverse_travel", false))
 
 	for entry in node_records:
 		if not (entry is Dictionary):
@@ -63,8 +64,28 @@ static func inspect(data: Dictionary) -> Dictionary:
 		# Simulation uses from_uid -> to_uid for pulse propagation.
 		outgoing[from_uid].append(to_uid)
 		incoming[to_uid].append(from_uid)
+		if two_way:
+			outgoing[to_uid].append(from_uid)
+			incoming[from_uid].append(to_uid)
 		if int(nodes[to_uid].get("kind", -1)) == PuzzleNode.Kind.BEGIN:
 			errors.append("Connection points into Begin node %s." % to_uid)
+
+	# A paired Wormhole is an additional directed edge in both directions.
+	# It is not rendered as a bridge, but it IS reachable by pulses.
+	for uid in nodes.keys():
+		var entry: Dictionary = nodes[uid]
+		if int(entry.get("kind", -1)) != PuzzleNode.Kind.WORMHOLE:
+			continue
+		var paired_uid: String = str(entry.get("wormhole_pair", ""))
+		if not nodes.has(paired_uid):
+			errors.append("Wormhole %s has no valid partner." % uid)
+			continue
+		var other: Dictionary = nodes[paired_uid]
+		if int(other.get("kind", -1)) != PuzzleNode.Kind.WORMHOLE or str(other.get("wormhole_pair", "")) != uid:
+			errors.append("Wormhole %s needs a reciprocal Wormhole partner." % uid)
+			continue
+		outgoing[uid].append(paired_uid)
+		incoming[paired_uid].append(uid)
 
 	# Union of reachable vertices from every Begin. This structural
 	# check does not assume every Begin must produce a winning run.

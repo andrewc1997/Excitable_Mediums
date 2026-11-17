@@ -4,6 +4,8 @@
 class_name PuzzleNode
 extends Node2D
 
+const PortRules = preload("res://scripts/puzzle_node/puzzle_port_rules.gd")
+
 # Excitable Mediums: EM4. Append-only Kind enum keeps old levels valid.
 
 enum Kind {
@@ -20,11 +22,27 @@ enum Kind {
 	REPEATER,         # 10
 	BOUNCE,           # 11
 	ONE_WAY_GATE,     # 12
-	BEGIN             # 13
+	BEGIN,            # 13
+	WORMHOLE          # 14 (append-only, old levels unchanged)
 }
 
 enum Channel { PURPLE, BLUE, GREEN, RED }
 enum Direction { NORTH, EAST, SOUTH, WEST }
+
+@export_category("Wormhole Visuals")
+# The pair accent colour still comes from _wormhole_pair_color(), so
+# matching endpoints keep their matching identity.
+@export var wormhole_outer_color: Color = Color("#7c3aed")
+@export var wormhole_inner_color: Color = Color("#22d3ee")
+@export var wormhole_core_color: Color = Color("#0f172a")
+@export_range(0.0, 8.0, 0.1) var wormhole_spin_speed: float = 1.6
+@export_range(1, 6, 1) var wormhole_arm_count: int = 3
+@export_range(1.0, 6.0, 0.1) var wormhole_line_width: float = 3.0
+@export_range(0.35, 0.82, 0.01) var wormhole_radius_factor: float = 0.62
+@export_range(1.0, 8.0, 0.1) var wormhole_flash_spin_multiplier: float = 3.5
+
+const WORMHOLE_FLASH_DURATION: float = 0.38
+var wormhole_spin_time: float = 0.0
 
 @export var kind: Kind = Kind.NORMAL:
 	set(value):
@@ -75,6 +93,14 @@ enum Direction { NORTH, EAST, SOUTH, WEST }
 		queue_redraw()
 @export var linked_target_uid: String = "" # Legacy only.
 
+@export_category("Wormhole")
+# A Wormhole points to its matching Wormhole UID, not a grid cell.
+# Both ends store reciprocal UIDs so deleting/repositioning nodes is safe.
+@export var wormhole_pair_uid: String = "":
+	set(value):
+		wormhole_pair_uid = value
+		queue_redraw()
+
 
 @export_category("Alternating Node")
 
@@ -83,6 +109,23 @@ var alternating_first_branch: int = 0:
 	set(value):
 		alternating_first_branch = clampi(value, 0, 1)
 		queue_redraw()
+
+# Saved per-level authoring rule. Player Mode currently uses this only
+# for Alternating nodes. Old levels default to false (locked).
+@export_category("Player Interaction")
+@export var player_editable: bool = false:
+	set(value):
+		player_editable = value
+		queue_redraw()
+
+# Zero is the original authored orientation. Each click rotates
+# the physical input port clockwise to its next attached arm.
+@export_range(0, 100, 1) var port_rotation_steps: int = 0:
+	set(value):
+		port_rotation_steps = maxi(0, value)
+		queue_redraw()
+
+
 
 
 var selected: bool = false:
@@ -98,6 +141,11 @@ var runtime_delay_remaining: int = 0
 var runtime_repeater_active: bool = false
 var runtime_repeat_remaining: int = 0
 var runtime_alternating_exit: int = -1
+var runtime_wormhole_flash: float = 0.0
+
+# Cosmetic player interaction only. The existing pulse simulation
+# still uses alternating_first_branch and the per-signal cursor.
+var player_switch_animating: bool = false
 
 @export_category("Activation Animation")
 @export_range(0.0, 0.5, 0.01) var pop_strength: float = 0.18
@@ -133,6 +181,7 @@ const BROKEN_COLOR: Color = Color("#dc2626")
 const SELECTION_COLOR: Color = Color("#38bdf8")
 const OPEN_COLOR: Color = Color("#86efac")
 const BEGIN_COLOR: Color = Color("#16876d")
+const WORMHOLE_COLOR: Color = Color("#463c91")
 
 
 func _ready() -> void:
@@ -151,7 +200,7 @@ func is_trigger_target() -> bool:
 func uses_channel() -> bool:
 	return kind == Kind.TRIGGER_TARGET or kind == Kind.BLOCKER_TARGET
 func has_unlimited_activations() -> bool:
-	return kind == Kind.NORMAL
+	return kind == Kind.NORMAL or kind == Kind.WORMHOLE
 func get_channel_color() -> Color:
 	match channel:
 		Channel.PURPLE: return Color("#a78bfa")
@@ -164,7 +213,7 @@ func get_remaining_activations() -> int:
 	return maxi(0, activation_cap - runtime_activations)
 func get_counter_text() -> String:
 	match kind:
-		Kind.NORMAL, Kind.BLOCKER_SINGLE, Kind.BLOCKER_TARGET, Kind.BOUNCE, Kind.ONE_WAY_GATE: return ""
+		Kind.NORMAL, Kind.WORMHOLE, Kind.BLOCKER_SINGLE, Kind.BLOCKER_TARGET, Kind.BOUNCE, Kind.ONE_WAY_GATE: return ""
 		Kind.BLOCKER_AMOUNT:
 			return str(maxi(0, blocker_hits - runtime_activations)) if runtime_test_mode else str(blocker_hits)
 		Kind.GATE_AMOUNT:
@@ -178,6 +227,21 @@ func get_counter_text() -> String:
 
 func _process(delta: float) -> void:
 	if Engine.is_editor_hint(): return
+	if kind == Kind.WORMHOLE:
+		# Idle vortex is always moving; flash briefly accelerates it.
+		var flash_amount: float = clampf(
+			runtime_wormhole_flash / WORMHOLE_FLASH_DURATION, 0.0, 1.0
+		)
+		var spin_multiplier: float = lerpf(
+			1.0, maxf(1.0, wormhole_flash_spin_multiplier), flash_amount
+		)
+		wormhole_spin_time = wrapf(
+			wormhole_spin_time + delta * wormhole_spin_speed * spin_multiplier,
+			0.0, TAU
+		)
+		if runtime_wormhole_flash > 0.0:
+			runtime_wormhole_flash = maxf(0.0, runtime_wormhole_flash - delta)
+		queue_redraw()
 	if kind == Kind.DELAY and delay_releasing:
 		delay_release_remaining = maxf(0.0, delay_release_remaining - delta)
 		var duration: float = maxf(delay_release_duration, 0.001)
@@ -210,6 +274,11 @@ func _process(delta: float) -> void:
 	if pop_time_remaining <= 0.0:
 		scale = Vector2.ONE
 		rotation = resting_rotation
+
+func flash_wormhole() -> void:
+	# A brief flare on both the entry and exit portal.
+	runtime_wormhole_flash = WORMHOLE_FLASH_DURATION
+	queue_redraw()
 
 func play_activation_animation() -> void:
 	if kind == Kind.NORMAL: return
@@ -273,6 +342,7 @@ func clear_test_display() -> void:
 	runtime_repeat_remaining = 0
 
 	runtime_alternating_exit = -1
+	runtime_wormhole_flash = 0.0
 
 	pop_time_remaining = 0.0
 	delay_charge_progress = 0.0
@@ -352,6 +422,12 @@ func _draw() -> void:
 		Kind.ONE_WAY_GATE:
 			color = ONE_WAY_COLOR
 
+		Kind.BEGIN:
+			color = BEGIN_COLOR
+
+		Kind.WORMHOLE:
+			color = WORMHOLE_COLOR
+
 	if runtime_broken:
 		color = BROKEN_COLOR
 
@@ -399,6 +475,12 @@ func _draw() -> void:
 
 	match kind:
 
+		Kind.BEGIN:
+			_draw_begin_symbol()
+
+		Kind.WORMHOLE:
+			_draw_wormhole_symbol()
+
 		Kind.NORMAL:
 
 			draw_circle(
@@ -408,7 +490,26 @@ func _draw() -> void:
 			)
 
 		Kind.ALTERNATING:
-			_draw_alternating_symbol()
+			if not _draw_player_port_rotor():
+				_draw_alternating_symbol()
+			# Tiny cyan handle on an adjustable switch; no outer ring.
+			if player_editable and not player_switch_animating:
+				draw_circle(Vector2(-13.5, -12.0), 3.1, Color("#67E8F9"))
+				draw_circle(Vector2(-13.5, -12.0), 1.0, Color("#FFFFFF"))
+
+		Kind.SPLITTER:
+			if _draw_player_port_rotor():
+				# Retain the remaining activation cap after switching to port artwork.
+				_draw_centered_text(get_counter_text(), 13.0, 10, Color.WHITE)
+			else:
+				_draw_centered_text(
+					"%d<%d" % [required_inputs, output_count],
+					-1.0, 12, Color.WHITE
+				)
+				_draw_centered_text(get_counter_text(), 12.0, 10, Color.WHITE)
+			if player_editable and not player_switch_animating:
+				draw_circle(Vector2(-13.5, -12.0), 3.1, Color("#67E8F9"))
+				draw_circle(Vector2(-13.5, -12.0), 1.0, Color.WHITE)
 
 		Kind.BLOCKER_SINGLE, Kind.BLOCKER_AMOUNT, Kind.BLOCKER_TARGET:
 			_draw_blocker_symbol()
@@ -444,6 +545,11 @@ func _draw() -> void:
 				Color.WHITE
 			)
 
+			# Cyan handle: this Splitter can be dragged in Player Mode.
+			if kind == Kind.SPLITTER and player_editable:
+				draw_circle(Vector2(-13.5, -12.0), 3.1, Color("#67E8F9"))
+				draw_circle(Vector2(-13.5, -12.0), 1.0, Color.WHITE)
+
 			if kind == Kind.TRIGGER_TARGET:
 
 				draw_circle(
@@ -470,6 +576,135 @@ func _draw() -> void:
 			true
 		)
 
+
+
+func _wormhole_pair_color() -> Color:
+	if wormhole_pair_uid.is_empty():
+		return Color("#8b93a9")
+	var ends: Array[String] = [node_uid, wormhole_pair_uid]
+	ends.sort()
+	var pair_key: String = ends[0] + ":" + ends[1]
+	var palette: Array[Color] = [
+		Color("#5eead4"), Color("#b4a0ff"), Color("#fda4af"),
+		Color("#86efac"), Color("#7dd3fc"), Color("#f0abfc")
+	]
+	var code: int = 0
+	for byte in pair_key.to_utf8_buffer():
+		code = (code * 31 + int(byte)) % 2147483647
+	return palette[code % palette.size()]
+
+
+func _draw_wormhole_symbol() -> void:
+	# A continuously swirling vortex, drawn entirely in this node's
+	# local space. No extra scenes, shaders, textures or game logic needed.
+	var pair_accent: Color = _wormhole_pair_color()
+	var outer_ink: Color = wormhole_outer_color.lerp(pair_accent, 0.65)
+	var inner_ink: Color = wormhole_inner_color.lerp(pair_accent, 0.30)
+	var radius: float = clampf(
+		RADIUS * wormhole_radius_factor, 7.5, RADIUS - 3.0
+	)
+	var flash: float = clampf(
+		runtime_wormhole_flash / WORMHOLE_FLASH_DURATION, 0.0, 1.0
+	)
+	var glow: float = 0.5 + 0.5 * sin(wormhole_spin_time * 1.7)
+
+	# Dark, recessed interior and a softly breathing halo.
+	var shadow: Color = wormhole_core_color
+	shadow.a = 0.88
+	draw_circle(Vector2.ZERO, radius + 1.0, shadow)
+	var halo: Color = outer_ink
+	halo.a = 0.18 + glow * 0.12 + flash * 0.25
+	draw_circle(Vector2.ZERO, radius + 3.0, halo)
+
+	# The faint rim gives the vortex a contained, portal-like edge.
+	var rim_color: Color = pair_accent
+	rim_color.a = 0.55 + flash * 0.40
+	draw_arc(Vector2.ZERO, radius + 2.0, 0.0, TAU, 48, rim_color, 1.7, true)
+
+	# Rotating bright fragments on the outer rim.
+	for fragment in range(3):
+		var fragment_angle: float = (
+			wormhole_spin_time * 0.7 + TAU * float(fragment) / 3.0
+		)
+		var fragment_ink: Color = inner_ink
+		fragment_ink.a = 0.42 + glow * 0.22 + flash * 0.20
+		draw_arc(
+			Vector2.ZERO, radius + 2.2,
+			fragment_angle, fragment_angle + 0.42,
+			12, fragment_ink, 2.2, true
+		)
+
+	# Draw inward spiralling arms. Their phase moves every frame,
+	# while the inner ends lead into the dark centre of the tunnel.
+	var count: int = maxi(1, wormhole_arm_count)
+	var steps: int = 36
+	for arm_index in range(count):
+		var arm_offset: float = TAU * float(arm_index) / float(count)
+		var points: PackedVector2Array = PackedVector2Array()
+		for step in range(steps + 1):
+			var t: float = float(step) / float(steps)
+			var angle: float = (
+				wormhole_spin_time + arm_offset + t * TAU * 1.35
+			)
+			var distance: float = lerpf(radius * 0.93, 1.9, t)
+			points.append(Vector2(cos(angle), sin(angle)) * distance)
+
+		# A coloured under-stroke adds depth; the thin cyan highlight
+		# follows the same curve and intensifies during teleportation.
+		var arm_base: Color = outer_ink
+		arm_base.a = 0.75 + flash * 0.25
+		draw_polyline(
+			points, arm_base,
+			wormhole_line_width + 1.0 + flash * 0.8, true
+		)
+		var arm_highlight: Color = inner_ink
+		arm_highlight.a = 0.63 + flash * 0.37
+		draw_polyline(
+			points, arm_highlight,
+			maxf(0.8, wormhole_line_width * 0.42 + flash * 0.7), true
+		)
+
+		# Each arm carries a small moving bead of energy around the rim.
+		draw_circle(points[0], 1.3 + flash * 0.7, arm_highlight)
+
+	# A small dark core makes the lines seem to disappear inward.
+	draw_circle(Vector2.ZERO, 4.4, wormhole_core_color)
+	var core_rim: Color = inner_ink
+	core_rim.a = 0.65 + flash * 0.35
+	draw_arc(Vector2.ZERO, 4.6, 0.0, TAU, 24, core_rim, 1.1, true)
+	draw_circle(Vector2.ZERO, 1.6 + flash * 0.7, pair_accent)
+
+	# Keep the existing unpaired warning and teleport-arrival flare.
+	if wormhole_pair_uid.is_empty():
+		_draw_centered_text("?", 8.0, 10, Color("#fca5a5"))
+	if flash > 0.0:
+		var progress: float = 1.0 - flash
+		var flare: Color = pair_accent
+		flare.a = flash * 0.90
+		draw_arc(
+			Vector2.ZERO, radius + 3.5 + progress * 6.0,
+			0.0, TAU, 48, flare, 2.2 + flash * 1.4, true
+		)
+
+
+func _draw_begin_symbol() -> void:
+	# A green, unmistakably clickable Play button in Builder and Player Mode.
+	# Draw everything in node-local coordinates, so Player Mode scaling and
+	# fades work without any special cases.
+	draw_circle(Vector2.ZERO, 15.0, Color("#0B5F4D"))
+	draw_arc(
+		Vector2.ZERO, 15.0, 0.0, TAU, 40,
+		Color("#70E7B7"), 1.6, true
+	)
+	# The triangle is shifted slightly right for optical centering.
+	draw_colored_polygon(
+		PackedVector2Array([
+			Vector2(-5.0, -9.0),
+			Vector2(10.0, 0.0),
+			Vector2(-5.0, 9.0)
+		]),
+		Color.WHITE
+	)
 
 
 func _draw_blocker_symbol() -> void:
@@ -554,6 +789,18 @@ func set_alternating_display(
 
 func _draw_alternating_symbol() -> void:
 
+	# While picked up, temporarily show a symmetric rotor. This
+	# allows a full 120-degree Honeycomb or 90-degree Square turn
+	# without a sudden visual snap when the node is put down.
+	if player_switch_animating:
+		_draw_switch_rotor()
+		return
+
+	# Only the Honeycomb icon uses the actual 120-degree branches.
+	# Square and Rhombus retain their original symbol unchanged.
+	if _draw_honeycomb_alternating_symbol():
+		return
+
 	# The highlighted branch is the NEXT available route.
 	# The other branch is greyed out.
 	#
@@ -614,3 +861,326 @@ func _draw_alternating_symbol() -> void:
 		2.4,
 		Color.WHITE
 	)
+
+
+# ============================================================
+# 3-ARM / 4-ARM ROTOR USED ONLY DURING PLAYER CLICK ANIMATION
+#
+# This is a cosmetic part. We don't change connection endpoints,
+# bridge geometry, or any pulse routing rules.
+# ============================================================
+
+func _draw_switch_rotor() -> void:
+	# Show the SAME ONE available exit throughout the lift/turn.
+	# Other directions stay dark. The symbol spins with its holder.
+	var arm_directions: Array[Vector2] = []
+	var outgoing: Array[Dictionary] = []
+	var incoming_dirs: Array[Vector2] = []
+
+	var host: Node = self
+	var live_grid: SquarePuzzleGrid = null
+	var connections_node: Node = null
+	while host != null:
+		live_grid = host.get_node_or_null("Grid") as SquarePuzzleGrid
+		connections_node = host.get_node_or_null("Connections")
+		if live_grid != null and connections_node != null:
+			break
+		host = host.get_parent()
+
+	if live_grid != null:
+		var cell_origin: Vector2 = live_grid.cell_to_local(grid_cell)
+		for neighbour in live_grid.get_neighbors(grid_cell):
+			var direction: Vector2 = (
+				live_grid.cell_to_local(neighbour) - cell_origin
+			).normalized()
+			if direction.length_squared() > 0.001:
+				arm_directions.append(direction)
+
+		var records: Variant = connections_node.get("connections")
+		if records is Array:
+			for record in records:
+				if not (record is Dictionary):
+					continue
+				var path: Array = record.get("path", [])
+				if path.size() < 2:
+					continue
+				if str(record.get("from_uid", "")) == node_uid:
+					var out_dir: Vector2 = (
+						live_grid.cell_to_local(path[1])
+						- live_grid.cell_to_local(path[0])
+					).normalized()
+					outgoing.append({
+						"to": str(record.get("to_uid", "")),
+						"direction": out_dir
+					})
+				if str(record.get("to_uid", "")) == node_uid:
+					var end_index: int = path.size() - 1
+					incoming_dirs.append((
+						live_grid.cell_to_local(path[end_index - 1])
+						- live_grid.cell_to_local(path[end_index])
+					).normalized())
+
+	# Match the ordering in TestLevel._activate_alternating().
+	outgoing.sort_custom(
+		func(a: Dictionary, b: Dictionary) -> bool:
+			var a_direction: Vector2 = a["direction"]
+			var b_direction: Vector2 = b["direction"]
+			var a_y: float = a_direction.y
+			var b_y: float = b_direction.y
+			if absf(a_y - b_y) > 0.0001:
+				return a_y < b_y
+			return str(a["to"]) < str(b["to"])
+	)
+
+	var next_index: int = alternating_first_branch
+	if runtime_alternating_exit >= 0:
+		next_index = runtime_alternating_exit
+	var active_direction: Vector2 = Vector2.RIGHT
+	if not outgoing.is_empty():
+		active_direction = outgoing[posmod(next_index, outgoing.size())]["direction"]
+
+	if arm_directions.is_empty():
+		arm_directions.append(Vector2.RIGHT)
+		arm_directions.append(Vector2.DOWN)
+		arm_directions.append(Vector2.LEFT)
+		arm_directions.append(Vector2.UP)
+
+	var highlighted: bool = false
+	for direction in arm_directions:
+		var color: Color = Color("#526B74")
+		var width: float = 2.6
+		for incoming in incoming_dirs:
+			if direction.dot(incoming) > 0.98:
+				color = Color("#96B5BC")
+				width = 3.0
+				break
+		if not highlighted and direction.dot(active_direction) > 0.98:
+			color = Color("#F4FFFF")
+			width = 4.0
+			highlighted = true
+		draw_line(Vector2.ZERO, direction * 16.0, color, width, true)
+
+	draw_circle(Vector2.ZERO, 2.6, Color.WHITE)
+
+
+func _draw_honeycomb_alternating_symbol() -> bool:
+	# Find the Builder owning this node. It can be either a direct
+	# child of PlacedNodes or nested inside a PlayerVisualScale wrapper.
+	var host: Node = self
+	var found_grid: SquarePuzzleGrid = null
+	var found_connections: Node = null
+	while host != null:
+		var grid_candidate: SquarePuzzleGrid = (
+			host.get_node_or_null("Grid") as SquarePuzzleGrid
+		)
+		var connections_candidate: Node = host.get_node_or_null("Connections")
+		if grid_candidate != null and connections_candidate != null:
+			found_grid = grid_candidate
+			found_connections = connections_candidate
+			break
+		host = host.get_parent()
+
+	# The old left/right fork is used for Square, Rhombus and
+	# when previewing the PuzzleNode scene on its own.
+	if found_grid == null or not found_grid.is_honeycomb():
+		return false
+
+	var neighbour_cells: Array[Vector2i] = found_grid.get_neighbors(grid_cell)
+	if neighbour_cells.is_empty():
+		return false
+
+	# Calculate directions in the node's own local space, so
+	# scale wrappers and future rotations cannot misalign the icon.
+	var origin_global: Vector2 = found_grid.to_global(
+		found_grid.cell_to_local(grid_cell)
+	)
+	var origin_local: Vector2 = to_local(origin_global)
+	var arms: Array[Vector2] = []
+	for neighbour in neighbour_cells:
+		var end_global: Vector2 = found_grid.to_global(
+			found_grid.cell_to_local(neighbour)
+		)
+		var direction: Vector2 = (to_local(end_global) - origin_local).normalized()
+		if direction.length_squared() > 0.0001:
+			arms.append(direction)
+
+	var incoming_arms: Array[Vector2] = []
+	var outgoing: Array[Dictionary] = []
+	var all_connections: Variant = found_connections.get("connections")
+	if all_connections is Array:
+		for entry in all_connections:
+			if not (entry is Dictionary):
+				continue
+			var path: Array = entry.get("path", [])
+			if path.size() < 2:
+				continue
+
+			if str(entry.get("from_uid", "")) == node_uid:
+				var start_cell: Vector2i = path[0]
+				var next_cell: Vector2i = path[1]
+				var delta: Vector2 = (
+					found_grid.cell_to_local(next_cell)
+					- found_grid.cell_to_local(start_cell)
+				).normalized()
+				var endpoint_global: Vector2 = found_grid.to_global(
+					found_grid.cell_to_local(next_cell)
+				)
+				var local_dir: Vector2 = (
+					to_local(endpoint_global) - origin_local
+				).normalized()
+				outgoing.append({
+					"to": str(entry.get("to_uid", "")),
+					"direction": local_dir,
+					"sort_y": delta.y
+				})
+
+			if str(entry.get("to_uid", "")) == node_uid:
+				var last_index: int = path.size() - 1
+				var prior_cell: Vector2i = path[last_index - 1]
+				var source_global: Vector2 = found_grid.to_global(
+					found_grid.cell_to_local(prior_cell)
+				)
+				var incoming_dir: Vector2 = (
+					to_local(source_global) - origin_local
+				).normalized()
+				incoming_arms.append(incoming_dir)
+
+	# IMPORTANT: This is the same ordering used in
+	# builder_test_level.gd::_activate_alternating(): visually
+	# higher outgoing connection first, then destination UID.
+	outgoing.sort_custom(
+		func(a: Dictionary, b: Dictionary) -> bool:
+			if absf(float(a["sort_y"]) - float(b["sort_y"])) > 0.0001:
+				return float(a["sort_y"]) < float(b["sort_y"])
+			return str(a["to"]) < str(b["to"])
+	)
+
+	var selected_exit: int = alternating_first_branch
+	if runtime_alternating_exit >= 0:
+		selected_exit = runtime_alternating_exit
+	var active_index: int = -1
+	if not outgoing.is_empty():
+		active_index = posmod(selected_exit, outgoing.size())
+
+	var available_color: Color = Color("#F4FFFF")
+	var incoming_color: Color = Color("#D1E9EF")
+	var unavailable_color: Color = Color("#526B74")
+
+	for arm in arms:
+		var arm_color: Color = unavailable_color
+		var arm_width: float = 2.6
+
+		for incoming_dir in incoming_arms:
+			if arm.dot(incoming_dir) > 0.98:
+				arm_color = incoming_color
+				arm_width = 3.0
+				break
+
+		for index in range(outgoing.size()):
+			var out_dir: Vector2 = outgoing[index]["direction"]
+			if arm.dot(out_dir) > 0.98:
+				if index == active_index:
+					arm_color = available_color
+					arm_width = 3.8
+				else:
+					arm_color = unavailable_color
+					arm_width = 2.6
+				break
+
+		draw_line(Vector2.ZERO, arm * 16.0, arm_color, arm_width, true)
+
+	draw_circle(Vector2.ZERO, 2.4, Color.WHITE)
+	return true
+
+
+# ============================================================
+# TWO-WAY PHYSICAL ROTOR VISUALS
+# One muted/unused port + two active output ports.
+# Alternating: one bright output, one muted output.
+# Splitter: both outputs bright.
+# This is the same port selection function used by TestLevel.
+# ============================================================
+
+func _draw_player_port_rotor() -> bool:
+	# Honeycomb alternators: three physical ports, ONE red (blocked),
+	# TWO white (open). Rotation changes the red port, not an output pair.
+	if kind != Kind.ALTERNATING and kind != Kind.SPLITTER:
+		return false
+
+	var host: Node = self
+	var live_grid: PuzzleGridBase = null
+	var connections_node: Node = null
+	var tools_node: Node = null
+	while host != null:
+		live_grid = host.get_node_or_null("Grid") as PuzzleGridBase
+		connections_node = host.get_node_or_null("Connections")
+		tools_node = host.get_node_or_null("LevelTools")
+		if live_grid != null and connections_node != null and tools_node != null:
+			break
+		host = host.get_parent()
+
+	if live_grid == null or connections_node == null or tools_node == null:
+		return false
+	if not bool(tools_node.get("allow_reverse_travel")):
+		return false
+
+	var shape: SquarePuzzleGrid = live_grid as SquarePuzzleGrid
+	var is_hex: bool = shape != null and shape.is_honeycomb()
+	if kind == Kind.ALTERNATING and not is_hex:
+		return false
+	if kind == Kind.SPLITTER and not player_editable:
+		return false
+
+	var builder_node: Node = live_grid.get_parent()
+	var nodes_lookup: Dictionary = builder_node.get("nodes_by_id")
+	var raw_records: Variant = connections_node.get("connections")
+	if not (raw_records is Array):
+		return false
+
+	var ports: Array[Dictionary] = []
+	var closed_to: String = ""
+	if kind == Kind.ALTERNATING:
+		ports = PortRules.three_way_ports(
+			node_uid, raw_records, nodes_lookup, live_grid
+		)
+		if ports.size() != 3:
+			return false
+		var closed_index: int = posmod(port_rotation_steps, 3)
+		if runtime_test_mode and runtime_alternating_exit >= 0:
+			closed_index = posmod(runtime_alternating_exit, 3)
+		closed_to = str(ports[closed_index]["to"])
+	else:
+		var splitter: Dictionary = PortRules.get_rotor(
+			node_uid, raw_records, nodes_lookup, live_grid,
+			port_rotation_steps, true
+		)
+		if not bool(splitter.get("valid", false)):
+			return false
+		ports.assign(splitter["ports"])
+		closed_to = str(splitter["input"]["to"])
+
+	for port in ports:
+		var path: Array = port["path"]
+		if path.size() < 2:
+			continue
+		var start_world: Vector2 = live_grid.to_global(live_grid.cell_to_local(path[0]))
+		var end_world: Vector2 = live_grid.to_global(live_grid.cell_to_local(path[1]))
+		var direction: Vector2 = (to_local(end_world) - to_local(start_world)).normalized()
+		if direction.length_squared() < 0.001:
+			continue
+		# When the wrapper rotates, keep the arms moving with it.
+		if player_switch_animating:
+			var holder: Node2D = get_parent() as Node2D
+			if holder != null and holder.has_meta("em_player_visual_wrapper"):
+				direction = direction.rotated(holder.rotation)
+
+		var closed: bool = str(port["to"]) == closed_to
+		var ink: Color = Color("#F4FFFF")
+		var width: float = 3.8
+		if closed:
+			ink = Color("#F04B51") if kind == Kind.ALTERNATING else Color("#8295A3")
+			width = 4.1 if kind == Kind.ALTERNATING else 2.8
+		draw_line(Vector2.ZERO, direction * 16.0, ink, width, true)
+
+	draw_circle(Vector2.ZERO, 2.4, Color.WHITE)
+	return true

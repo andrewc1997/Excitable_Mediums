@@ -21,6 +21,8 @@ var direction_fields: VBoxContainer
 var direction_option: OptionButton
 var alternating_fields: VBoxContainer
 var alternating_direction_option: OptionButton
+var alternating_editable_check: CheckBox
+var splitter_editable_check: CheckBox
 var cap_label: Label
 var channel_fields: VBoxContainer
 var delay_fields: VBoxContainer
@@ -177,6 +179,10 @@ func create_inspector() -> void:
 	alternating_direction_option.add_item("South-East / Lower", 1)
 	alternating_fields.add_child(alternating_direction_option)
 	alternating_direction_option.item_selected.connect(_on_alternating_branch_changed)
+	alternating_editable_check = CheckBox.new()
+	alternating_editable_check.text = "Player can change this switch"
+	alternating_fields.add_child(alternating_editable_check)
+	alternating_editable_check.toggled.connect(_on_alternating_editable_changed)
 	var alternating_note := Label.new()
 	alternating_note.text = "Switches after each passing signal."
 	alternating_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -190,6 +196,13 @@ func create_inspector() -> void:
 	add_field_label(splitter_fields, "Output Signals")
 	outputs_spin = create_spin(splitter_fields, 1, 6)
 	outputs_spin.value_changed.connect(_on_number_changed.bind("outputs"))
+	# Same saved player_editable flag as Alternating Nodes.
+	# A checked Splitter rotates in place before launch.
+	splitter_editable_check = CheckBox.new()
+	splitter_editable_check.text = "Player can rotate this splitter"
+	splitter_editable_check.tooltip_text = "120° Honeycomb, 90° Square/Rhombus. Requires Two-way bridges."
+	splitter_fields.add_child(splitter_editable_check)
+	splitter_editable_check.toggled.connect(_on_splitter_editable_changed)
 
 	blocker_amount_fields = VBoxContainer.new()
 	column.add_child(blocker_amount_fields)
@@ -277,7 +290,23 @@ func show_selected_node(uid: String) -> void:
 	node_type_option.select(int(node.kind))
 	cap_spin.set_value_no_signal(node.activation_cap)
 	refractory_spin.set_value_no_signal(node.refractory_ticks)
-	alternating_direction_option.select(int(node.alternating_first_branch))
+	var honeycomb_three_way: bool = false
+	var live_grid: SquarePuzzleGrid = builder.get_node_or_null("Grid") as SquarePuzzleGrid
+	var tools: Node = builder.get_node_or_null("LevelTools")
+	if live_grid != null and tools != null:
+		honeycomb_three_way = live_grid.is_honeycomb() and bool(tools.get("allow_reverse_travel"))
+	alternating_direction_option.clear()
+	if honeycomb_three_way:
+		alternating_direction_option.add_item("Port 1 (clockwise order)", 0)
+		alternating_direction_option.add_item("Port 2 (clockwise order)", 1)
+		alternating_direction_option.add_item("Port 3 (clockwise order)", 2)
+		alternating_direction_option.select(posmod(node.port_rotation_steps, 3))
+	else:
+		alternating_direction_option.add_item("North-East / Upper", 0)
+		alternating_direction_option.add_item("South-East / Lower", 1)
+		alternating_direction_option.select(int(node.alternating_first_branch))
+	alternating_editable_check.set_pressed_no_signal(node.player_editable)
+	splitter_editable_check.set_pressed_no_signal(node.player_editable)
 	inputs_spin.set_value_no_signal(node.required_inputs)
 	outputs_spin.set_value_no_signal(node.output_count)
 	blocker_hits_spin.set_value_no_signal(node.blocker_hits)
@@ -360,7 +389,32 @@ func _on_alternating_branch_changed(index: int) -> void:
 	var node: PuzzleNode = builder.nodes_by_id[selected_uid]
 	if node.kind != PuzzleNode.Kind.ALTERNATING:
 		return
-	node.alternating_first_branch = clampi(index, 0, 1)
+	var live_grid: SquarePuzzleGrid = builder.get_node_or_null("Grid") as SquarePuzzleGrid
+	var tools: Node = builder.get_node_or_null("LevelTools")
+	if live_grid != null and tools != null and live_grid.is_honeycomb() and bool(tools.get("allow_reverse_travel")):
+		node.port_rotation_steps = clampi(index, 0, 2)
+	else:
+		node.alternating_first_branch = clampi(index, 0, 1)
+	node.refresh_visuals()
+
+
+func _on_alternating_editable_changed(enabled: bool) -> void:
+	if updating_controls or not builder.nodes_by_id.has(selected_uid):
+		return
+	var node: PuzzleNode = builder.nodes_by_id[selected_uid]
+	if node.kind != PuzzleNode.Kind.ALTERNATING:
+		return
+	node.player_editable = enabled
+	node.refresh_visuals()
+
+
+func _on_splitter_editable_changed(enabled: bool) -> void:
+	if updating_controls or not builder.nodes_by_id.has(selected_uid):
+		return
+	var node: PuzzleNode = builder.nodes_by_id[selected_uid]
+	if node.kind != PuzzleNode.Kind.SPLITTER:
+		return
+	node.player_editable = enabled
 	node.refresh_visuals()
 
 

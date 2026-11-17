@@ -4,3 +4,4 @@
 
 [node name="PlayerMode" type="Node2D"]
 script = ExtResource("1_u6thm")
+level_file_path = "res://levels/wormhole_sandbox_honeycomb.json"

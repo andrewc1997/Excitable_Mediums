@@ -1,5 +1,18 @@
 extends Node2D
 
+const PortRules = preload("res://scripts/puzzle_node/puzzle_port_rules.gd")
+
+# Legacy levels keep the directed rules. New levels may opt into
+# returning along authored bridges, without duplicating any geometry.
+var allow_reverse_connections: bool = false
+# Per-bridge travel rule. 0 normal, 1 authored direction only,
+# 2 reverse direction only, 3 one crossing then die, 4 closed,
+# 5 player-drop blocker slot.
+var bridge_modes: Dictionary = {}
+var reserved_one_shots: Dictionary = {}
+var spent_one_shots: Dictionary = {}
+var player_blocked_bridges: Dictionary = {}
+
 # ============================================================
 # EXCITABLE MEDIUMS - EM9 PLAYTEST
 # Godot 4.3
@@ -22,6 +35,9 @@ var tick_seconds: float = 0.22
 
 const MAX_TICKS: int = 2000
 const MAX_ACTIVE_PULSES: int = 5000
+
+@export_category("Playtest Appearance")
+@export var show_node_state_rings: bool = false
 
 const PULSE_COLOR: Color = Color("#49d9ed")
 const SECOND_PULSE_COLOR: Color = Color("#b4efff")
@@ -87,6 +103,8 @@ var links: Array[Dictionary] = []
 var node_states: Dictionary = {}
 var delayed_pulses: Array[Dictionary] = []
 var repeater_jobs: Array[Dictionary] = []
+# One-tick virtual transfer: never traverses a drawn bridge.
+var wormhole_jobs: Array[Dictionary] = []
 
 var targets_total: int = 0
 var targets_reached: int = 0
@@ -265,6 +283,9 @@ func _setup_test_ui() -> void:
 # ============================================================
 
 func enter_test_mode() -> void:
+	if level_tools != null:
+		allow_reverse_connections = bool(level_tools.get("allow_reverse_travel"))
+		bridge_modes = level_tools.get("bridge_modes").duplicate(true)
 
 	if test_mode or test_bar == null:
 		return
@@ -469,8 +490,13 @@ func _reset_run_state() -> void:
 	timeline_cursor = -1
 
 	pulses.clear()
+	reserved_one_shots.clear()
+	spent_one_shots.clear()
+	player_blocked_bridges.clear()
+	_refresh_bridge_visuals()
 	delayed_pulses.clear()
 	repeater_jobs.clear()
+	wormhole_jobs.clear()
 	node_states.clear()
 
 	targets_total = 0
@@ -618,7 +644,12 @@ func _start_from(uid: String) -> void:
 		_set_status("Only Begin can launch signals.")
 		return
 
+	# Keep player-placed blockers when Begin is first launched.
+	# Retry and Reset still clear them via _reset_run_state().
+	var preplaced_blockers: Dictionary = player_blocked_bridges.duplicate(true)
 	_reset_run_state()
+	player_blocked_bridges = preplaced_blockers
+	_refresh_bridge_visuals()
 	selected_start_id = uid
 
 	if targets_total == 0 or not node_states.has(uid):
@@ -690,6 +721,9 @@ func _advance_tick() -> void:
 
 		if int(pulse["arrival_tick"]) <= current_tick:
 
+			# A one-shot bridge disappears only AFTER the travelling
+			# signal arrives at its destination.
+			_on_pulse_arrived_over_bridge(pulse)
 			var uid: String = str(pulse["to"])
 
 			if not arriving.has(uid):
@@ -716,6 +750,9 @@ func _advance_tick() -> void:
 			str(uid),
 			arriving[uid]
 		)
+
+	if running:
+		_release_due_wormholes()
 
 	if running:
 		_release_due_delays()
@@ -750,6 +787,71 @@ func _advance_tick() -> void:
 # ============================================================
 
 
+func _activate_wormhole(
+	uid: String, node: PuzzleNode, state: Dictionary, arrivals: Array
+) -> void:
+	var partner_uid: String = node.wormhole_pair_uid
+	if (partner_uid.is_empty() or partner_uid == uid
+		or not builder.nodes_by_id.has(partner_uid)):
+		_record_node_failure(uid, "Wormhole partner is missing")
+		return
+	var partner: PuzzleNode = builder.nodes_by_id[partner_uid]
+	if partner.kind != PuzzleNode.Kind.WORMHOLE or partner.wormhole_pair_uid != uid:
+		_record_node_failure(uid, "Wormhole partner must link back")
+		return
+	state["activations"] = int(state["activations"]) + arrivals.size()
+	state["last_tick"] = current_tick
+	node.set_test_display(true, int(state["activations"]), false)
+	node.flash_wormhole()
+	for arrival in arrivals:
+		# Keep the entrance direction so a multi-exit partner favours
+		# continuing forward, not a random connection order.
+		var heading: Vector2 = _get_incoming_heading([arrival])
+		wormhole_jobs.append({
+			"from": uid,
+			"to": partner_uid,
+			"heading": heading,
+			"due_tick": current_tick + 1
+		})
+
+
+func _release_due_wormholes() -> void:
+	var pending: Array[Dictionary] = []
+	var due: Array[Dictionary] = []
+	for job in wormhole_jobs:
+		if int(job["due_tick"]) <= current_tick:
+			due.append(job)
+		else:
+			pending.append(job)
+	wormhole_jobs = pending
+	for job in due:
+		if not running:
+			return
+		var destination: String = str(job["to"])
+		if not builder.nodes_by_id.has(destination) or not node_states.has(destination):
+			_finish(false, "Wormhole exit is missing")
+			return
+		var node: PuzzleNode = builder.nodes_by_id[destination]
+		var state: Dictionary = node_states[destination]
+		if bool(state.get("broken", false)):
+			continue
+		state["activations"] = int(state["activations"]) + 1
+		state["last_tick"] = current_tick
+		state["incoming_from"] = str(job["from"])
+		state["incoming_heading"] = job["heading"]
+		node.set_test_display(true, int(state["activations"]), false)
+		node.flash_wormhole()
+		# Each entrance pulse produces exactly one exit pulse. All
+		# ordinary bridge rules (directional, single-use, blocked) apply.
+		var options: Array[Dictionary] = _prefer_forward_links(
+			destination, job["heading"]
+		)
+		if options.is_empty():
+			_record_node_failure(destination, "Wormhole exit has no open bridge")
+			continue
+		_dispatch_pulse(destination, options[0])
+
+
 func _activate_arrivals(
 	uid: String,
 	arrivals: Array
@@ -769,6 +871,10 @@ func _activate_arrivals(
 
 	var node: PuzzleNode = builder.nodes_by_id[uid]
 	var state: Dictionary = node_states[uid]
+	# Used to avoid accidental U-turns at ordinary junctions.
+	state["incoming_from"] = (
+		str(arrivals[0].get("from", "")) if count == 1 else ""
+	)
 
 	var arrival_heading: Vector2 = (
 		_get_incoming_heading(arrivals)
@@ -778,6 +884,12 @@ func _activate_arrivals(
 		state["incoming_heading"] = arrival_heading
 
 	if bool(state.get("broken", false)):
+		return
+
+	# Wormholes schedule a one-tick virtual transfer to their partner.
+	# Arrival at the partner is an EXIT, not another wormhole entry.
+	if node.kind == PuzzleNode.Kind.WORMHOLE:
+		_activate_wormhole(uid, node, state, arrivals)
 		return
 
 	# Alternators process each pulse independently, including
@@ -975,6 +1087,18 @@ func _activate_arrivals(
 
 	if node.kind == PuzzleNode.Kind.SPLITTER:
 
+		if node.player_editable and allow_reverse_connections:
+			var input_rotor: Dictionary = PortRules.get_rotor(
+				uid, links, builder.nodes_by_id, grid,
+				int(node.port_rotation_steps), true
+			)
+			if bool(input_rotor.get("valid", false)):
+				var permitted_source: String = str(input_rotor["input"]["to"])
+				for pulse in arrivals:
+					if str(pulse.get("from", "")) != permitted_source:
+						_record_node_failure(uid, "Splitter received signal at its output port")
+						return
+
 		if count != node.required_inputs:
 
 			_record_node_failure(
@@ -983,6 +1107,7 @@ func _activate_arrivals(
 				% [node.required_inputs, count]
 			)
 			return
+
 
 	# ====================================================
 	# ACTIVATION CAP AND REFRACTORY
@@ -1049,6 +1174,20 @@ func _activate_arrivals(
 			arrival_heading
 		)
 
+	# A player-rotated Splitter chooses the other two *physical*
+	# bridges, including reverse directions when two-way is enabled.
+	if node.kind == PuzzleNode.Kind.SPLITTER and allow_reverse_connections and node.player_editable:
+		var rotor_outputs: Dictionary = PortRules.get_rotor(
+			uid, links, builder.nodes_by_id, grid,
+			int(node.port_rotation_steps), true
+		)
+		if not bool(rotor_outputs.get("valid", false)):
+			_record_node_failure(uid, "Rotating Splitter needs at least three attached bridges")
+			return
+		options.clear()
+		for choice in rotor_outputs["outputs"]:
+			options.append(choice)
+
 	# ====================================================
 	# FILTER RETURNING BOUNCE SIGNALS
 	# ====================================================
@@ -1103,6 +1242,9 @@ func _activate_arrivals(
 
 		for index in range(node.output_count):
 
+			if not _bridge_can_traverse(uid, str(options[index]["to"])):
+				_record_node_failure(uid, "Splitter output is blocked by bridge rule")
+				return
 			_dispatch_pulse(
 				uid,
 				options[index]
@@ -1752,33 +1894,81 @@ func _mark_node_broken(uid: String) -> void:
 # by state["cursor"] in _activate_arrivals().
 # ============================================================
 
+# Called by PlayerMode when a draggable blocker is dropped into an
+# author-defined slot. Already-travelling pulses are not cancelled.
+func place_player_bridge_blocker(bridge_id: String) -> bool:
+	if not test_mode or finished or player_blocked_bridges.has(bridge_id):
+		return false
+	if int(bridge_modes.get(bridge_id, 0)) != 5:
+		return false
+	player_blocked_bridges[bridge_id] = true
+	_refresh_bridge_visuals()
+	# Record this placement in the timeline when the simulation is running.
+	if running:
+		_save_snapshot()
+	return true
+
+
+func _bridge_record(from_uid: String, to_uid: String) -> Dictionary:
+	for record in links:
+		if (str(record["from_uid"]) == from_uid and str(record["to_uid"]) == to_uid) or (str(record["from_uid"]) == to_uid and str(record["to_uid"]) == from_uid):
+			return record
+	return {}
+
+
+func _bridge_can_traverse(from_uid: String, to_uid: String) -> bool:
+	var record: Dictionary = _bridge_record(from_uid, to_uid)
+	if record.is_empty():
+		return false
+	var key: String = PortRules.bridge_key(from_uid, to_uid)
+	var mode: int = int(bridge_modes.get(key, 0))
+	match mode:
+		1:
+			return str(record["from_uid"]) == from_uid
+		2:
+			return str(record["to_uid"]) == from_uid
+		3:
+			return not reserved_one_shots.has(key) and not spent_one_shots.has(key)
+		4:
+			return false
+		5:
+			return not player_blocked_bridges.has(key)
+	return true
+
+
+func _on_pulse_arrived_over_bridge(pulse: Dictionary) -> void:
+	var from_uid: String = str(pulse.get("from", ""))
+	var to_uid: String = str(pulse.get("to", ""))
+	if from_uid.is_empty() or to_uid.is_empty():
+		return
+	var key: String = PortRules.bridge_key(from_uid, to_uid)
+	if int(bridge_modes.get(key, 0)) == 3:
+		spent_one_shots[key] = true
+		_refresh_bridge_visuals()
+
+
+func _refresh_bridge_visuals() -> void:
+	if connection_layer != null and connection_layer.has_method("set_bridge_rules"):
+		connection_layer.set_bridge_rules(bridge_modes, spent_one_shots)
+		if connection_layer.has_method("set_player_blocked"):
+			connection_layer.set_player_blocked(player_blocked_bridges)
+
+
 func _outgoing_links(
 	uid: String
 ) -> Array[Dictionary]:
 
-	var choices: Array[Dictionary] = []
+	var choices: Array[Dictionary] = PortRules.incident_links(
+		uid, links, builder.nodes_by_id, allow_reverse_connections
+	)
 
-	# ====================================================
-	# COLLECT OUTGOING CONNECTIONS
-	# ====================================================
-
-	for connection in links:
-
-		if str(connection["from_uid"]) != uid:
-			continue
-
-		var path: Array[Vector2i] = []
-
-		for cell in connection["path"]:
-			path.append(cell)
-
-		if path.size() < 2:
-			continue
-
-		choices.append({
-			"to": str(connection["to_uid"]),
-			"path": path
-		})
+	# These rules are constraints on each bridge, independent of
+	# the level-wide reversible flag or the orientation of a rotor.
+	var permitted: Array[Dictionary] = []
+	for choice in choices:
+		if _bridge_can_traverse(uid, str(choice["to"])):
+			permitted.append(choice)
+	choices = permitted
 
 	# ====================================================
 	# CHECK FOR ALTERNATING NODE
@@ -1956,6 +2146,15 @@ func _prefer_forward_links(
 		_outgoing_links(uid)
 	)
 
+	if allow_reverse_connections and node_states.has(uid):
+		var source_uid: String = str(node_states[uid].get("incoming_from", ""))
+		if not source_uid.is_empty():
+			var forward_only: Array[Dictionary] = []
+			for option in options:
+				if str(option["to"]) != source_uid:
+					forward_only.append(option)
+			options = forward_only
+
 	if incoming_heading.length_squared() < 0.001:
 		return options
 
@@ -2034,26 +2233,29 @@ func _dispatch_path(
 	path: Array[Vector2i],
 	is_returning: bool
 ) -> void:
-
 	if not running:
+		return
+	if not _bridge_can_traverse(from_uid, to_uid):
+		# The bridge diode, closed blocker or a spent single-use
+		# segment absorbs this attempted departure.
 		return
 
 	var length: int = _path_length(path)
-
 	if length <= 0:
-
 		_finish(false, "Invalid pulse route.")
 		return
-
 	if (
-		pulses.size()
-		+ _count_held_signals()
-		+ _pending_repeater_emissions()
-		>= MAX_ACTIVE_PULSES
+		pulses.size() + _count_held_signals()
+		+ _pending_repeater_emissions() + wormhole_jobs.size() >= MAX_ACTIVE_PULSES
 	):
-
 		_finish(false, "Too many active pulses.")
 		return
+
+	var key: String = PortRules.bridge_key(from_uid, to_uid)
+	if int(bridge_modes.get(key, 0)) == 3:
+		# Reserve immediately to stop a second pulse entering while
+		# the first is in flight; visibly burn only on arrival.
+		reserved_one_shots[key] = true
 
 	pulses.append({
 		"from": from_uid,
@@ -2106,6 +2308,7 @@ func _check_completion() -> void:
 		not pulses.is_empty()
 		or not delayed_pulses.is_empty()
 		or not repeater_jobs.is_empty()
+		or not wormhole_jobs.is_empty()
 	):
 		return
 
@@ -2182,7 +2385,9 @@ func _draw() -> void:
 	if not test_mode or grid == null:
 		return
 
-	_draw_node_rings()
+	if show_node_state_rings:
+		_draw_node_rings()
+
 	_draw_pulses()
 
 
@@ -2195,35 +2400,31 @@ func _draw_node_rings() -> void:
 
 		var node: PuzzleNode = builder.nodes_by_id[uid]
 		var state: Dictionary = node_states[uid]
+		var centre: Vector2 = to_local(node.global_position)
 
-		var centre: Vector2 = (
-			to_local(node.global_position)
-		)
+		# In Player Mode, nodes live inside a scaled wrapper.
+		# In the Builder, their parent has scale 1.0.
+		# This keeps activation/reached rings matched to each node.
+		var visual_scale: float = 1.0
+		var parent_2d: Node2D = node.get_parent() as Node2D
+		if parent_2d != null and parent_2d.has_meta("em_player_visual_wrapper"):
+			visual_scale = parent_2d.scale.x
 
 		if bool(state["broken"]):
-
 			draw_arc(
-				centre,
-				29.0,
-				0.0,
-				TAU,
-				40,
-				Color("#ff4545"),
-				4.0,
-				true
+				centre, 29.0 * visual_scale, 0.0, TAU, 40,
+				Color("#ff4545"), 4.0 * visual_scale, true
 			)
 
 		elif bool(state["reached"]):
-
 			var color: Color = (
 				node.get_channel_color()
 				if node.kind == PuzzleNode.Kind.TRIGGER_TARGET
 				else TARGET_REACHED_COLOR
 			)
-
 			draw_arc(
-				centre, 29.0, 0.0, TAU,
-				40, color, 4.0, true
+				centre, 29.0 * visual_scale, 0.0, TAU, 40,
+				color, 4.0 * visual_scale, true
 			)
 
 		elif (
@@ -2236,25 +2437,15 @@ func _draw_node_rings() -> void:
 			continue
 
 		elif int(state["activations"]) > 0:
-
-			var elapsed: int = (
-				current_tick - int(state["last_tick"])
-			)
-
+			var elapsed: int = current_tick - int(state["last_tick"])
 			var color: Color = (
-				PULSE_COLOR if elapsed <= 0
-				else REFRACTORY_COLOR
+				PULSE_COLOR if elapsed <= 0 else REFRACTORY_COLOR
 			)
-
-			if (
-				node.has_unlimited_activations()
-				or elapsed > node.refractory_ticks
-			):
+			if node.has_unlimited_activations() or elapsed > node.refractory_ticks:
 				color = Color("#64748b")
-
 			draw_arc(
-				centre, 28.0, 0.0, TAU,
-				40, color, 3.0, true
+				centre, 28.0 * visual_scale, 0.0, TAU, 40,
+				color, 3.0 * visual_scale, true
 			)
 
 
@@ -2662,8 +2853,12 @@ func _save_snapshot() -> void:
 			else ""
 		),
 		"pulses": pulses.duplicate(true),
+		"reserved_one_shots": reserved_one_shots.duplicate(true),
+		"spent_one_shots": spent_one_shots.duplicate(true),
+		"player_blocked_bridges": player_blocked_bridges.duplicate(true),
 		"delayed_pulses": delayed_pulses.duplicate(true),
 		"repeater_jobs": repeater_jobs.duplicate(true),
+		"wormhole_jobs": wormhole_jobs.duplicate(true),
 		"node_states": node_states.duplicate(true),
 		"targets_reached": targets_reached,
 		"gate_states": gate_rules.states.duplicate(true),
@@ -2698,6 +2893,10 @@ func _restore_snapshot(index: int) -> void:
 	pulses.assign(
 		snapshot["pulses"].duplicate(true)
 	)
+	reserved_one_shots = snapshot.get("reserved_one_shots", {}).duplicate(true)
+	spent_one_shots = snapshot.get("spent_one_shots", {}).duplicate(true)
+	player_blocked_bridges = snapshot.get("player_blocked_bridges", {}).duplicate(true)
+	_refresh_bridge_visuals()
 
 	delayed_pulses.assign(
 		snapshot["delayed_pulses"].duplicate(true)
@@ -2706,6 +2905,7 @@ func _restore_snapshot(index: int) -> void:
 	repeater_jobs.assign(
 		snapshot["repeater_jobs"].duplicate(true)
 	)
+	wormhole_jobs.assign(snapshot.get("wormhole_jobs", []).duplicate(true))
 
 	node_states = (
 		snapshot["node_states"].duplicate(true)
@@ -2748,6 +2948,7 @@ func _refresh_snapshot_node_visuals() -> void:
 		var state: Dictionary = node_states[uid]
 
 		node.clear_test_display()
+		node.runtime_wormhole_flash = 0.0
 
 		node.set_test_display(
 			true,
@@ -2812,62 +3013,114 @@ func _activate_alternating(
 	if bool(state.get("broken", false)):
 		return
 
+	var live_grid: SquarePuzzleGrid = grid as SquarePuzzleGrid
+	var honeycomb_rotor: bool = (
+		allow_reverse_connections
+		and live_grid != null
+		and live_grid.is_honeycomb()
+	)
+	var ports: Array[Dictionary] = []
+	if honeycomb_rotor:
+		ports = PortRules.three_way_ports(
+			uid, links, builder.nodes_by_id, grid
+		)
+		if ports.size() != 3:
+			honeycomb_rotor = false
+
+	# NEW: Three-port rotor has one CLOSED arm (red) and two OPEN
+	# arms (white). A signal entering an open arm exits the other one.
+	# The red arm rotates clockwise after each accepted signal.
+	if honeycomb_rotor:
+		var cursor: int = int(state.get("cursor", 0))
+		var used: int = int(state.get("activations", 0))
+		for arrival in arrivals:
+			var blocked_index: int = posmod(int(node.port_rotation_steps) + cursor, 3)
+			var from_uid: String = str(arrival.get("from", ""))
+			var incoming_index: int = -1
+			for i in range(3):
+				if str(ports[i]["to"]) == from_uid:
+					incoming_index = i
+					break
+
+			# Red port cannot receive or send. Blocked arrivals are absorbed
+			# without turning the rotor or consuming an activation.
+			if incoming_index == blocked_index:
+				continue
+			if used >= node.activation_cap:
+				_record_node_failure(uid, "Alternating Node capacity exceeded")
+				return
+			if incoming_index < 0:
+				_record_node_failure(uid, "Alternating Node arrival is not on an attached port")
+				return
+
+			var exit_index: int = -1
+			for i in range(3):
+				if i != blocked_index and i != incoming_index:
+					exit_index = i
+					break
+			if exit_index < 0:
+				return
+			var option: Dictionary = ports[exit_index]
+			if not _bridge_can_traverse(uid, str(option["to"])):
+				# An external diode or player bridge blocker may prevent
+				# departure; the pulse is absorbed without a second path.
+				continue
+			_dispatch_pulse(uid, option)
+			if not running:
+				return
+			used += 1
+			cursor += 1
+			state["activations"] = used
+			state["cursor"] = cursor
+			state["last_tick"] = current_tick
+			var next_closed: int = posmod(int(node.port_rotation_steps) + cursor, 3)
+			state["alternating_last_exit"] = next_closed
+			node.set_test_display(true, used, false)
+			node.set_alternating_display(next_closed)
+		return
+
+	# The original two-position logic is unchanged for Square,
+	# Rhombus, and older directed Honeycomb puzzles.
 	var options: Array[Dictionary] = _outgoing_links(uid)
+	if allow_reverse_connections:
+		var authored: Array[Dictionary] = []
+		for option in options:
+			if not bool(option.get("reversed", false)):
+				authored.append(option)
+		options = authored
+	options.sort_custom(
+		func(a: Dictionary, b: Dictionary) -> bool:
+			var ap: Array = a["path"]
+			var bp: Array = b["path"]
+			var da: Vector2 = (grid.cell_to_local(ap[1]) - grid.cell_to_local(ap[0])).normalized()
+			var db: Vector2 = (grid.cell_to_local(bp[1]) - grid.cell_to_local(bp[0])).normalized()
+			if absf(da.y - db.y) > 0.0001:
+				return da.y < db.y
+			return str(a["to"]) < str(b["to"])
+	)
 	if options.is_empty():
 		_record_node_failure(uid, "Alternating Node has no exit")
 		return
-
-	# Sort by actual visual outgoing direction. Upper
-	# (NE on rhombus) is index 0, lower (SE) index 1.
-	# This order remains stable across all arrivals.
-	options.sort_custom(
-		func(a: Dictionary, b: Dictionary) -> bool:
-			var a_path: Array = a["path"]
-			var b_path: Array = b["path"]
-			var a_delta: Vector2 = (
-				grid.cell_to_local(a_path[1])
-				- grid.cell_to_local(a_path[0])
-			).normalized()
-			var b_delta: Vector2 = (
-				grid.cell_to_local(b_path[1])
-				- grid.cell_to_local(b_path[0])
-			).normalized()
-			if absf(a_delta.y - b_delta.y) > 0.0001:
-				return a_delta.y < b_delta.y
-			return str(a["to"]) < str(b["to"])
-	)
-
-	var cursor: int = int(state.get("cursor", 0))
-	var used: int = int(state.get("activations", 0))
-	var cap: int = node.activation_cap
-
-	for arrival in arrivals:
-		if used >= cap:
+	var legacy_cursor: int = int(state.get("legacy_cursor", 0))
+	var legacy_used: int = int(state.get("activations", 0))
+	for _arrival in arrivals:
+		if legacy_used >= node.activation_cap:
 			_record_node_failure(uid, "Alternating Node capacity exceeded")
 			return
-
-		var selected_index: int = 0
-		if options.size() > 1:
-			selected_index = (
-				int(node.alternating_first_branch) + cursor
-			) % options.size()
-
-		_dispatch_pulse(uid, options[selected_index])
+		var selected: int = posmod(int(node.alternating_first_branch) + legacy_cursor, options.size())
+		var chosen: Dictionary = options[selected]
+		if not _bridge_can_traverse(uid, str(chosen["to"])):
+			_record_node_failure(uid, "Selected Alternating port is blocked")
+			return
+		_dispatch_pulse(uid, chosen)
 		if not running:
 			return
-
-		used += 1
-		cursor += 1
-		state["activations"] = used
-		state["cursor"] = cursor
+		legacy_used += 1
+		legacy_cursor += 1
+		state["activations"] = legacy_used
+		state["legacy_cursor"] = legacy_cursor
 		state["last_tick"] = current_tick
-
-		# The highlighted route is the NEXT exit.
-		var next_index: int = 0
-		if options.size() > 1:
-			next_index = (
-				int(node.alternating_first_branch) + cursor
-			) % options.size()
+		var next_index: int = posmod(int(node.alternating_first_branch) + legacy_cursor, options.size())
 		state["alternating_last_exit"] = next_index
-		node.set_test_display(true, used, false)
+		node.set_test_display(true, legacy_used, false)
 		node.set_alternating_display(next_index)

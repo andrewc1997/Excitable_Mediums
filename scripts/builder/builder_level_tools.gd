@@ -1,5 +1,7 @@
 extends Node
 
+const BridgePorts = preload("res://scripts/puzzle_node/puzzle_port_rules.gd")
+
 # ============================================================
 # EXCITABLE MEDIUMS - EM9 LEVEL TOOLS
 # Godot 4.3
@@ -16,7 +18,7 @@ const NODE_SCENE: PackedScene = preload(
 
 const DESIGN_VALIDATOR = preload("res://scripts/builder/test/level_design_validator.gd")
 
-const FORMAT_VERSION: int = 7
+const FORMAT_VERSION: int = 8
 const SAVE_PATH: String = "user://excitable_level.json"
 
 const MAX_GRID_SIZE: int = 40
@@ -39,6 +41,16 @@ var decrease_size_button: Button
 var increase_size_button: Button
 var current_size: int = 12
 var status_label: Label
+var two_way_checkbox: CheckBox
+var allow_reverse_travel: bool = false
+var bridge_modes: Dictionary = {}
+var player_blocker_count: int = 0
+var blocker_count_spin: SpinBox
+var bridge_dialog: PopupPanel
+var bridge_connection_select: OptionButton
+var bridge_mode_select: OptionButton
+var bridge_dialog_hint: Label
+var selected_bridge_index: int = -1
 
 var overlay: ColorRect
 var dialog_center: CenterContainer
@@ -74,6 +86,7 @@ func _initialize_level_tools() -> void:
 	create_code_dialog()
 	create_clear_confirmation()
 	create_validation_dialog()
+	_create_bridge_dialog()
 
 	var live_grid := grid as SquarePuzzleGrid
 
@@ -108,7 +121,7 @@ func create_toolbar() -> void:
 	panel.offset_left = 16.0
 	panel.offset_right = -16.0
 	panel.offset_top = 20.0
-	panel.offset_bottom = 105.0
+	panel.offset_bottom = 137.0
 
 	var column := VBoxContainer.new()
 	panel.add_child(column)
@@ -168,11 +181,35 @@ func create_toolbar() -> void:
 	add_toolbar_button(row, "Share Code", _on_export_pressed)
 	add_toolbar_button(row, "Import Code", _on_import_pressed)
 
+	two_way_checkbox = CheckBox.new()
+	two_way_checkbox.text = "Two-way bridges (pulses can also travel backwards)"
+	two_way_checkbox.button_pressed = allow_reverse_travel
+	two_way_checkbox.toggled.connect(_on_two_way_toggled)
+	column.add_child(two_way_checkbox)
+
+	var bridge_row := HBoxContainer.new()
+	column.add_child(bridge_row)
+	add_toolbar_button(bridge_row, "Bridge Rules", _on_bridge_rules_pressed)
+	var bridge_note := Label.new()
+	bridge_note.text = "One-way diodes and single-use bridges"
+	bridge_row.add_child(bridge_note)
+
 	status_label = Label.new()
 	status_label.text = "Ready."
 	column.add_child(status_label)
 
 	update_grid_size_label()
+
+
+func _on_two_way_toggled(enabled: bool) -> void:
+	allow_reverse_travel = enabled
+	if status_label != null:
+		status_label.text = (
+			"Two-way bridge travel enabled." if enabled
+			else "One-way bridge travel enabled."
+		)
+	if builder != null and builder.builder_ui != null:
+		builder.builder_ui.show_selected_node(builder.selected_node_id)
 
 
 func add_toolbar_button(
@@ -424,7 +461,7 @@ func centre_grid_camera() -> void:
 	)
 
 	var left_edge: float = 45.0
-	var top_edge: float = 135.0
+	var top_edge: float = 180.0
 	var right_edge: float = viewport_size.x - 290.0
 	var bottom_edge: float = viewport_size.y - 150.0
 
@@ -511,6 +548,11 @@ func _confirm_clear_level() -> void:
 
 
 func clear_level() -> void:
+	bridge_modes.clear()
+	player_blocker_count = 0
+	if blocker_count_spin != null:
+		blocker_count_spin.set_value_no_signal(0)
+	_sync_bridge_visuals()
 
 	builder.connection_start_id = ""
 	builder.dragging_node_id = ""
@@ -797,7 +839,10 @@ func export_level_data() -> Dictionary:
 			"repeat_count": node.repeat_count,
 			"repeat_interval": node.repeat_interval,
 			"one_way_direction": int(node.one_way_direction),
-			"alternating_first_branch": int(node.alternating_first_branch)
+			"alternating_first_branch": int(node.alternating_first_branch),
+			"player_editable": bool(node.player_editable),
+			"port_rotation_steps": int(node.port_rotation_steps),
+			"wormhole_pair": node.wormhole_pair_uid
 		})
 
 	for connection in builder.connection_layer.connections:
@@ -812,17 +857,28 @@ func export_level_data() -> Dictionary:
 			"to": str(connection["to_uid"]),
 			"from_port": connection["from_port"],
 			"to_port": connection["to_port"],
-			"path": path_data
+			"path": path_data,
+			"bridge_mode": int(bridge_modes.get(BridgePorts.bridge_key(
+				str(connection["from_uid"]), str(connection["to_uid"])
+			), 0))
 		})
 
+	var has_wormholes: bool = false
+	for entry in level_nodes:
+		if int(entry["kind"]) == PuzzleNode.Kind.WORMHOLE:
+			has_wormholes = true
+			break
+
 	return {
-		# Preserve EM6 codes for Square/Rhombus; Honeycomb uses EM7.
-		"version": 7 if selected_grid_type == "honeycomb" else 6,
+		# EM8 adds Wormhole IDs. Existing levels still export EM6/EM7.
+		"version": 8 if has_wormholes else (7 if selected_grid_type == "honeycomb" else 6),
 		"grid_type": selected_grid_type,
 		"columns": grid.grid_columns,
 		"rows": grid.grid_rows,
 		"nodes": level_nodes,
-		"connections": level_connections
+		"connections": level_connections,
+		"allow_reverse_travel": allow_reverse_travel,
+		"player_blocker_count": player_blocker_count
 	}
 
 
@@ -890,6 +946,7 @@ func decode_level(code: String) -> Dictionary:
 		"EM5": version = 5
 		"EM6": version = 6
 		"EM7": version = 7
+		"EM8": version = 8
 		_:
 			return {"error": "Unsupported code version."}
 
@@ -1024,6 +1081,11 @@ func _honeycomb_cells_are_neighbors(a: Vector2i, b: Vector2i) -> bool:
 
 func validate_level(data: Dictionary) -> String:
 
+	if not _valid_int(data.get("player_blocker_count", 0), 0, 20):
+		return "Invalid number of player bridge blockers."
+	if data.has("allow_reverse_travel") and not (data["allow_reverse_travel"] is bool):
+		return "Two-way bridge setting must be true or false."
+
 	if not _valid_int(
 		data.get("version", -1),
 		1,
@@ -1147,6 +1209,9 @@ func validate_level(data: Dictionary) -> String:
 			6, 7:
 				max_kind = PuzzleNode.Kind.BEGIN
 
+			8:
+				max_kind = PuzzleNode.Kind.WORMHOLE
+
 		if not _valid_int(
 			entry.get("kind", null),
 			0,
@@ -1230,11 +1295,39 @@ func validate_level(data: Dictionary) -> String:
 			if not _valid_int(entry["alternating_first_branch"], 0, 1):
 				return "Invalid Alternating starting branch."
 
+		# Optional in EM6/EM7. Older levels are always locked.
+		if entry.has("port_rotation_steps"):
+			if not _valid_int(entry["port_rotation_steps"], 0, 100):
+				return "Invalid node rotation steps."
+
+		if entry.has("player_editable"):
+			if not (entry["player_editable"] is bool):
+				return "Invalid player-editable setting."
+
+		if int(entry["kind"]) == PuzzleNode.Kind.WORMHOLE:
+			var pair_value: Variant = entry.get("wormhole_pair", "")
+			if not (pair_value is String):
+				return "Wormhole partner must be a node ID."
+			if str(pair_value).is_empty() or str(pair_value) == uid:
+				return "Wormhole %s needs a different Wormhole partner." % uid
+
 		if int(entry["kind"]) == PuzzleNode.Kind.BEGIN:
 			begin_ids[uid] = true
 
 		ids[uid] = cell
 		occupied[cell] = uid
+
+	# Wormhole links are virtual (no authored bridge required).
+	var wormhole_records: Dictionary = {}
+	for entry in nodes_data:
+		if int(entry["kind"]) == PuzzleNode.Kind.WORMHOLE:
+			wormhole_records[str(entry["id"])] = str(entry.get("wormhole_pair", ""))
+	for entry_id in wormhole_records.keys():
+		var partner_uid: String = str(wormhole_records[entry_id])
+		if not wormhole_records.has(partner_uid):
+			return "Wormhole %s has a missing or non-Wormhole partner." % entry_id
+		if str(wormhole_records[partner_uid]) != str(entry_id):
+			return "Wormhole %s is not paired back by %s." % [entry_id, partner_uid]
 
 	# ----------------------------------------------------
 	# CONNECTIONS
@@ -1247,6 +1340,8 @@ func validate_level(data: Dictionary) -> String:
 
 		if not (entry is Dictionary):
 			return "Invalid connection record."
+		if not _valid_int(entry.get("bridge_mode", 0), 0, 5):
+			return "Invalid bridge mode."
 
 		var from_value: Variant = entry.get("from", null)
 		var to_value: Variant = entry.get("to", null)
@@ -1431,6 +1526,12 @@ func validate_level(data: Dictionary) -> String:
 func apply_level_data(data: Dictionary) -> void:
 
 	clear_level()
+	allow_reverse_travel = bool(data.get("allow_reverse_travel", false))
+	player_blocker_count = int(data.get("player_blocker_count", 0))
+	if blocker_count_spin != null:
+		blocker_count_spin.set_value_no_signal(player_blocker_count)
+	if two_way_checkbox != null:
+		two_way_checkbox.set_pressed_no_signal(allow_reverse_travel)
 
 	var saved_type: String = str(
 		data.get("grid_type", "square")
@@ -1511,7 +1612,10 @@ func apply_level_data(data: Dictionary) -> void:
 		node.alternating_first_branch = int(
 			entry.get("alternating_first_branch", 0)
 		)
+		node.player_editable = bool(entry.get("player_editable", false))
+		node.port_rotation_steps = int(entry.get("port_rotation_steps", 0))
 		node.linked_target_uid = ""
+		node.wormhole_pair_uid = str(entry.get("wormhole_pair", ""))
 
 		builder.placed_nodes.add_child(node)
 
@@ -1529,6 +1633,13 @@ func apply_level_data(data: Dictionary) -> void:
 		node.refresh_visuals()
 
 	for entry in data["connections"]:
+
+		var bridge_id: String = BridgePorts.bridge_key(
+			str(entry["from"]), str(entry["to"])
+		)
+		var saved_mode: int = int(entry.get("bridge_mode", 0))
+		if saved_mode != 0:
+			bridge_modes[bridge_id] = saved_mode
 
 		var path: Array[Vector2i] = []
 
@@ -1577,6 +1688,7 @@ func apply_level_data(data: Dictionary) -> void:
 
 	builder.next_node_number = next_number
 
+	_sync_bridge_visuals()
 	builder.connection_layer.refresh_connections()
 
 	update_grid_size_label()
@@ -1584,6 +1696,128 @@ func apply_level_data(data: Dictionary) -> void:
 
 	if builder.builder_ui != null:
 		builder.builder_ui.show_selected_node("")
+
+
+# ============================================================
+# BRIDGE MODES — author each bridge independently in the Builder.
+# The authored from -> to orientation is shown in the list.
+# ============================================================
+
+func _sync_bridge_visuals() -> void:
+	if builder != null and builder.connection_layer != null:
+		if builder.connection_layer.has_method("set_bridge_rules"):
+			builder.connection_layer.set_bridge_rules(bridge_modes, {})
+
+
+func _create_bridge_dialog() -> void:
+	bridge_dialog = PopupPanel.new()
+	bridge_dialog.title = "Bridge Rules"
+	bridge_dialog.min_size = Vector2i(550, 330)
+	add_child(bridge_dialog)
+	var margins := MarginContainer.new()
+	bridge_dialog.add_child(margins)
+	margins.set_anchors_preset(Control.PRESET_FULL_RECT)
+	for side in ["margin_left", "margin_top", "margin_right", "margin_bottom"]:
+		margins.add_theme_constant_override(side, 14)
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", 9)
+	margins.add_child(column)
+	var prompt := Label.new()
+	prompt.text = "Choose an authored connection (from -> to):"
+	column.add_child(prompt)
+	bridge_connection_select = OptionButton.new()
+	bridge_connection_select.item_selected.connect(_on_bridge_connection_selected)
+	column.add_child(bridge_connection_select)
+	var label := Label.new()
+	label.text = "Travel rule:"
+	column.add_child(label)
+	bridge_mode_select = OptionButton.new()
+	bridge_mode_select.add_item("Normal (level default)", 0)
+	bridge_mode_select.add_item("Forward only: from -> to", 1)
+	bridge_mode_select.add_item("Reverse only: to -> from", 2)
+	bridge_mode_select.add_item("One crossing, then burn out", 3)
+	bridge_mode_select.add_item("Closed: no pulses", 4)
+	bridge_mode_select.add_item("Player blocker slot (drag/drop)", 5)
+	bridge_mode_select.item_selected.connect(_on_bridge_mode_selected)
+	column.add_child(bridge_mode_select)
+	var count_label := Label.new()
+	count_label.text = "Number of draggable blockers available in Player Mode:"
+	column.add_child(count_label)
+	blocker_count_spin = SpinBox.new()
+	blocker_count_spin.min_value = 0
+	blocker_count_spin.max_value = 20
+	blocker_count_spin.step = 1
+	blocker_count_spin.rounded = true
+	blocker_count_spin.value = player_blocker_count
+	blocker_count_spin.value_changed.connect(_on_player_blocker_count_changed)
+	column.add_child(blocker_count_spin)
+	bridge_dialog_hint = Label.new()
+	bridge_dialog_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	column.add_child(bridge_dialog_hint)
+	var done_button := Button.new()
+	done_button.text = "Done"
+	done_button.pressed.connect(bridge_dialog.hide)
+	column.add_child(done_button)
+
+
+func _on_bridge_rules_pressed() -> void:
+	bridge_connection_select.clear()
+	selected_bridge_index = -1
+	for i in range(builder.connection_layer.connections.size()):
+		var record: Dictionary = builder.connection_layer.connections[i]
+		var a: String = str(record["from_uid"])
+		var b: String = str(record["to_uid"])
+		var a_cell: Vector2i = builder.nodes_by_id[a].grid_cell
+		var b_cell: Vector2i = builder.nodes_by_id[b].grid_cell
+		bridge_connection_select.add_item(
+			"%s (%d,%d)  ->  %s (%d,%d)" % [
+				a, a_cell.x, a_cell.y, b, b_cell.x, b_cell.y
+			], i
+		)
+	bridge_mode_select.disabled = bridge_connection_select.item_count == 0
+	if bridge_connection_select.item_count > 0:
+		bridge_connection_select.select(0)
+		_on_bridge_connection_selected(0)
+	else:
+		bridge_dialog_hint.text = "Create a connection first."
+	bridge_dialog.popup_centered(Vector2i(550, 330))
+
+
+func _on_bridge_connection_selected(index: int) -> void:
+	selected_bridge_index = index
+	var records: Array[Dictionary] = builder.connection_layer.connections
+	if index < 0 or index >= records.size():
+		return
+	var record: Dictionary = records[index]
+	var id: String = BridgePorts.bridge_key(
+		str(record["from_uid"]), str(record["to_uid"])
+	)
+	bridge_mode_select.select(int(bridge_modes.get(id, 0)))
+	bridge_dialog_hint.text = (
+		"Forward means %s -> %s. One-shot is destroyed after the first pulse ARRIVES."
+		% [record["from_uid"], record["to_uid"]]
+	)
+
+
+func _on_player_blocker_count_changed(value: float) -> void:
+	player_blocker_count = int(value)
+	status_label.text = "Player blocker count changed. Save the level."
+
+
+func _on_bridge_mode_selected(mode: int) -> void:
+	var records: Array[Dictionary] = builder.connection_layer.connections
+	if selected_bridge_index < 0 or selected_bridge_index >= records.size():
+		return
+	var record: Dictionary = records[selected_bridge_index]
+	var id: String = BridgePorts.bridge_key(
+		str(record["from_uid"]), str(record["to_uid"])
+	)
+	if mode == 0:
+		bridge_modes.erase(id)
+	else:
+		bridge_modes[id] = mode
+	_sync_bridge_visuals()
+	status_label.text = "Bridge rule changed. Save the level to keep it."
 
 
 # ============================================================
