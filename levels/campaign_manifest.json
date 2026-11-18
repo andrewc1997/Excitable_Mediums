@@ -1,23 +1,77 @@
 {
   "version": 1,
   "levels": [
-    {
-      "id": "level_001",
-      "title": "First Connection",
-      "description": "Introduce Begin nodes and targets.",
-      "path": "res://levels/level_001.json"
-    },
-    {
-      "id": "level_002",
-      "title": "The Second Lap",
-      "description": "Learn splitters and loops.",
-      "path": "res://levels/level_002_loop.json"
-    },
-    {
-      "id": "level_003",
-      "title": "Point of No Return",
-      "description": "Time a drag-and-drop bridge blocker.",
-      "path": "res://levels/level_003_point_of_no_return.json"
-    }
+	{
+	  "id": "level_001",
+	  "title": "First Connection",
+	  "description": "Introduce Begin nodes and targets.",
+	  "path": "res://levels/level_001.json"
+	},
+	{
+	  "id": "level_002",
+	  "title": "The Second Lap",
+	  "description": "Learn splitters and loops.",
+	  "path": "res://levels/level_002_loop.json"
+	},
+	{
+	  "id": "level_003",
+	  "title": "Point of No Return",
+	  "description": "Time a drag-and-drop bridge blocker.",
+	  "path": "res://levels/level_003_point_of_no_return.json"
+	},
+	{
+	  "id": "level_004",
+	  "title": "The Other Side",
+	  "description": "Signals pass through a paired Wormhole without a physical bridge.",
+	  "path": "res://levels/level_004_the_other_side.json"
+	},
+	{
+	  "id": "level_005",
+	  "title": "The Long Way Round",
+	  "description": "A Bounce Node sends the pulse back; the junction then takes the remaining exit.",
+	  "path": "res://levels/level_005_the_long_way_round.json"
+	},
+	{
+	  "id": "level_006",
+	  "title": "Right of Way",
+	  "description": "One-way gates accept pulses only from their marked direction. Choose your Begin.",
+	  "path": "res://levels/level_006_right_of_way.json"
+	},
+	{
+	  "id": "level_007",
+	  "title": "Third Time’s a Charm",
+	  "description": "Pick the Begin that produces enough pulses to get past the Amount Blocker.",
+	  "path": "res://levels/level_007_third_times_a_charm.json"
+	},
+	{
+	  "id": "level_008",
+	  "title": "Two Is Enough",
+	  "description": "Choose the Begin whose Repeater fills a two-hit target through an Amount Gate.",
+	  "path": "res://levels/level_008_two_is_enough.json"
+	},
+	{
+	  "id": "level_009",
+	  "title": "The Dead End",
+	  "description": "Single Blockers safely stop pulses. Splitters still need all their configured exits.",
+	  "path": "res://levels/level_009_the_dead_end.json"
+	},
+	{
+	  "id": "level_010",
+	  "title": "Open Sesame",
+	  "description": "Use the Begin that triggers the blue unlock before the delayed pulse arrives.",
+	  "path": "res://levels/level_010_open_sesame.json"
+	},
+	{
+	  "id": "level_011",
+	  "title": "The Red Arm",
+	  "description": "Rotate the Alternating Node until its red arm closes the dead-end bridge.",
+	  "path": "res://levels/level_011_the_red_arm.json"
+	},
+	{
+	  "id": "level_012",
+	  "title": "Turn the Tables",
+	  "description": "Rotate the Splitter so the Begin bridge is its input and both targets are outputs.",
+	  "path": "res://levels/level_012_turn_the_tables.json"
+	}
   ]
 }

@@ -1,0 +1,157 @@
+{
+  "version": 8,
+  "grid_type": "honeycomb",
+  "columns": 12,
+  "rows": 12,
+  "nodes": [
+    {
+      "id": "node_0001",
+      "kind": 13,
+      "cell": [
+        2,
+        5
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0002",
+      "kind": 0,
+      "cell": [
+        3,
+        5
+      ],
+      "cap": 2,
+      "refractory": 0,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0003",
+      "kind": 11,
+      "cell": [
+        4,
+        4
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0004",
+      "kind": 3,
+      "cell": [
+        4,
+        6
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    }
+  ],
+  "connections": [
+    {
+      "from": "node_0001",
+      "to": "node_0002",
+      "from_port": 0,
+      "to_port": 0,
+      "path": [
+        [
+          2,
+          5
+        ],
+        [
+          3,
+          5
+        ]
+      ],
+      "bridge_mode": 0
+    },
+    {
+      "from": "node_0002",
+      "to": "node_0003",
+      "from_port": 0,
+      "to_port": 0,
+      "path": [
+        [
+          3,
+          5
+        ],
+        [
+          4,
+          4
+        ]
+      ],
+      "bridge_mode": 0
+    },
+    {
+      "from": "node_0002",
+      "to": "node_0004",
+      "from_port": 0,
+      "to_port": 0,
+      "path": [
+        [
+          3,
+          5
+        ],
+        [
+          4,
+          6
+        ]
+      ],
+      "bridge_mode": 0
+    }
+  ],
+  "allow_reverse_travel": false,
+  "player_blocker_count": 0,
+  "level_title": "Level 005 \u2014 The Long Way Round",
+  "player_hint": "A Bounce Node sends the pulse back; the junction then takes the remaining exit."
+}

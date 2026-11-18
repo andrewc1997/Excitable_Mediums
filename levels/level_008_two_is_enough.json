@@ -1,0 +1,225 @@
+{
+  "version": 8,
+  "grid_type": "square",
+  "columns": 12,
+  "rows": 12,
+  "nodes": [
+    {
+      "id": "node_0001",
+      "kind": 13,
+      "cell": [
+        1,
+        5
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0002",
+      "kind": 10,
+      "cell": [
+        3,
+        5
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 3,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0003",
+      "kind": 7,
+      "cell": [
+        6,
+        5
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0004",
+      "kind": 3,
+      "cell": [
+        9,
+        5
+      ],
+      "cap": 2,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0005",
+      "kind": 13,
+      "cell": [
+        6,
+        8
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    }
+  ],
+  "connections": [
+    {
+      "from": "node_0001",
+      "to": "node_0002",
+      "from_port": 0,
+      "to_port": 0,
+      "path": [
+        [
+          1,
+          5
+        ],
+        [
+          2,
+          5
+        ],
+        [
+          3,
+          5
+        ]
+      ],
+      "bridge_mode": 0
+    },
+    {
+      "from": "node_0002",
+      "to": "node_0003",
+      "from_port": 0,
+      "to_port": 0,
+      "path": [
+        [
+          3,
+          5
+        ],
+        [
+          4,
+          5
+        ],
+        [
+          5,
+          5
+        ],
+        [
+          6,
+          5
+        ]
+      ],
+      "bridge_mode": 0
+    },
+    {
+      "from": "node_0003",
+      "to": "node_0004",
+      "from_port": 0,
+      "to_port": 0,
+      "path": [
+        [
+          6,
+          5
+        ],
+        [
+          7,
+          5
+        ],
+        [
+          8,
+          5
+        ],
+        [
+          9,
+          5
+        ]
+      ],
+      "bridge_mode": 0
+    },
+    {
+      "from": "node_0005",
+      "to": "node_0003",
+      "from_port": 0,
+      "to_port": 0,
+      "path": [
+        [
+          6,
+          8
+        ],
+        [
+          6,
+          7
+        ],
+        [
+          6,
+          6
+        ],
+        [
+          6,
+          5
+        ]
+      ],
+      "bridge_mode": 0
+    }
+  ],
+  "allow_reverse_travel": false,
+  "player_blocker_count": 0,
+  "level_title": "Level 008 \u2014 Two Is Enough",
+  "player_hint": "Choose the Begin whose Repeater fills a two-hit target through an Amount Gate."
+}

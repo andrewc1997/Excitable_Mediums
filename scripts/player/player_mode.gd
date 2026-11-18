@@ -110,6 +110,7 @@ var blocker_return_tween: Tween
 
 # Campaign menu is deliberately modal: no permanent top bar.
 var level_select_layer: CanvasLayer
+var level_select_root: Control
 var level_select_list: VBoxContainer
 var level_select_summary: Label
 var level_select_paused_by_menu: bool = false
@@ -127,6 +128,9 @@ func _ready() -> void:
 		campaign_manager = CampaignManagerScript.new()
 		campaign_manager.name = "CampaignManager"
 		get_tree().root.add_child(campaign_manager)
+	# The menu and next-level lookup must never receive an empty manager
+	# simply because the manifest was loaded too early.
+	campaign_manager.call("ensure_ready")
 	_create_pause_overlay()
 	_create_result_overlay()
 	_create_bridge_blocker_inventory()
@@ -591,6 +595,9 @@ func _run_level_transition(path: String, wait_for_completion: bool) -> void:
 # ============================================================
 
 func _request_level_fit() -> void:
+	# Keep the modal UI sized to the game window when resizing.
+	if is_instance_valid(level_select_root):
+		level_select_root.size = get_viewport_rect().size
 	if ready_to_play:
 		# LevelTools may also fit the editor camera on resize.
 		# Run ours deferred so the player-specific fit wins.
@@ -1385,15 +1392,26 @@ func _create_level_select_overlay() -> void:
 	level_select_layer.layer = 240
 	add_child(level_select_layer)
 
+	# CanvasLayer is not a Control: give its UI an actual full-viewport
+	# Control parent. Without this, PRESET_FULL_RECT can leave the menu
+	# at its minimum panel dimensions in the top-left corner.
+	level_select_root = Control.new()
+	level_select_root.name = "FullScreenUI"
+	level_select_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	level_select_layer.add_child(level_select_root)
+	level_select_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	level_select_root.size = get_viewport_rect().size
+
 	var shade := ColorRect.new()
 	shade.color = Color(0.02, 0.06, 0.13, 0.82)
 	shade.mouse_filter = Control.MOUSE_FILTER_STOP
-	level_select_layer.add_child(shade)
-	shade.set_anchors_preset(Control.PRESET_FULL_RECT)
+	level_select_root.add_child(shade)
+	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	var center := CenterContainer.new()
-	level_select_layer.add_child(center)
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	level_select_root.add_child(center)
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	var panel := PanelContainer.new()
 	panel.custom_minimum_size = Vector2(520.0, 430.0)

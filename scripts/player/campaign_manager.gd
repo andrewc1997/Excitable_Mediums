@@ -19,11 +19,43 @@ const PROGRESS_PATH: String = "user://excitable_mediums_campaign_progress.json"
 var levels: Array[Dictionary] = []
 var completed_ids: Dictionary = {}
 var best_ticks: Dictionary = {}
+var _initialised: bool = false
+var _loading: bool = false
 
 
 func _ready() -> void:
+	ensure_ready()
+
+
+func ensure_ready() -> void:
+	# Safe to call when PlayerMode opens the menu or requests its next level.
+	# This also supports a manager that was instanced before it received _ready().
+	if _initialised or _loading:
+		return
+	_loading = true
 	_load_manifest()
+	if levels.is_empty():
+		_load_fallback_campaign()
 	_load_progress()
+	_initialised = true
+	_loading = false
+	print("CampaignManager: %d campaign levels available." % levels.size())
+
+
+func _load_fallback_campaign() -> void:
+	# Recovery ONLY when the manifest cannot be loaded. Normally the
+	# campaign order is controlled entirely by campaign_manifest.json.
+	push_warning("CampaignManager: Could not read campaign levels from res://levels/campaign_manifest.json; using the installed first three levels as a recovery list.")
+	var defaults: Array[Dictionary] = [
+		{"id": "level_001", "title": "First Connection", "description": "Introduce Begin nodes and targets.", "path": "res://levels/level_001.json"},
+		{"id": "level_002", "title": "The Second Lap", "description": "Learn splitters and loops.", "path": "res://levels/level_002_loop.json"},
+		{"id": "level_003", "title": "Point of No Return", "description": "Time a bridge blocker.", "path": "res://levels/level_003_point_of_no_return.json"}
+	]
+	for entry in defaults:
+		if FileAccess.file_exists(str(entry["path"])):
+			levels.append(entry.duplicate(true))
+	if levels.is_empty():
+		push_error("CampaignManager: No playable campaign JSON files were found under res://levels/.")
 
 
 func _load_manifest() -> void:
@@ -36,10 +68,18 @@ func _load_manifest() -> void:
 	if file == null:
 		push_error("CampaignManager: Cannot open campaign manifest.")
 		return
-	var parsed: Variant = JSON.parse_string(file.get_as_text())
+	var source_text: String = file.get_as_text().strip_edges()
 	file.close()
+	# Allow UTF-8 BOM accidentally inserted by Windows text editors.
+	source_text = source_text.trim_prefix("\uFEFF")
+	var parser: JSON = JSON.new()
+	var error: Error = parser.parse(source_text)
+	if error != OK:
+		push_error("CampaignManager: Invalid campaign_manifest.json at line %d: %s" % [parser.get_error_line(), parser.get_error_message()])
+		return
+	var parsed: Variant = parser.data
 	if not (parsed is Dictionary):
-		push_error("CampaignManager: Campaign manifest must be a JSON object.")
+		push_error("CampaignManager: Campaign manifest must be a JSON object with a 'levels' array.")
 		return
 
 	var raw: Variant = parsed.get("levels", [])
@@ -72,6 +112,7 @@ func _load_manifest() -> void:
 			"title": str(entry.get("title", id)),
 			"description": str(entry.get("description", ""))
 		})
+	print("CampaignManager: Manifest parsed: %d levels." % levels.size())
 
 
 func _load_progress() -> void:
@@ -141,10 +182,12 @@ func _index_for_path(path: String) -> int:
 
 
 func get_all_levels() -> Array[Dictionary]:
+	ensure_ready()
 	return levels.duplicate(true)
 
 
 func get_entry_by_path(path: String) -> Dictionary:
+	ensure_ready()
 	var index: int = _index_for_path(path)
 	if index < 0:
 		return {}
@@ -152,10 +195,12 @@ func get_entry_by_path(path: String) -> Dictionary:
 
 
 func is_campaign_path(path: String) -> bool:
+	ensure_ready()
 	return _index_for_path(path) >= 0
 
 
 func is_level_unlocked(path: String) -> bool:
+	ensure_ready()
 	var index: int = _index_for_path(path)
 	if index < 0:
 		return false
@@ -166,6 +211,7 @@ func is_level_unlocked(path: String) -> bool:
 
 
 func is_level_completed(path: String) -> bool:
+	ensure_ready()
 	var index: int = _index_for_path(path)
 	if index < 0:
 		return false
@@ -173,6 +219,7 @@ func is_level_completed(path: String) -> bool:
 
 
 func get_best_ticks(path: String) -> int:
+	ensure_ready()
 	var index: int = _index_for_path(path)
 	if index < 0:
 		return -1
@@ -180,6 +227,7 @@ func get_best_ticks(path: String) -> int:
 
 
 func mark_level_completed(path: String, tick: int) -> void:
+	ensure_ready()
 	var index: int = _index_for_path(path)
 	if index < 0:
 		# Sandbox/Builder levels are intentionally excluded.
@@ -194,6 +242,7 @@ func mark_level_completed(path: String, tick: int) -> void:
 
 
 func get_next_level_path(path: String) -> String:
+	ensure_ready()
 	var index: int = _index_for_path(path)
 	if index < 0 or index + 1 >= levels.size():
 		return ""
@@ -202,6 +251,7 @@ func get_next_level_path(path: String) -> String:
 
 
 func get_resume_path() -> String:
+	ensure_ready()
 	if levels.is_empty():
 		return ""
 	# Resume at the first unlocked level not yet completed.
@@ -214,6 +264,7 @@ func get_resume_path() -> String:
 
 
 func get_completed_count() -> int:
+	ensure_ready()
 	var count: int = 0
 	for entry in levels:
 		if completed_ids.has(str(entry["id"])):

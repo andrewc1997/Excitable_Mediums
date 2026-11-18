@@ -1,0 +1,220 @@
+{
+  "version": 8,
+  "grid_type": "honeycomb",
+  "columns": 12,
+  "rows": 12,
+  "nodes": [
+    {
+      "id": "node_0001",
+      "kind": 13,
+      "cell": [
+        2,
+        5
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0002",
+      "kind": 0,
+      "cell": [
+        3,
+        5
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0003",
+      "kind": 14,
+      "cell": [
+        4,
+        6
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": "node_0004"
+    },
+    {
+      "id": "node_0004",
+      "kind": 14,
+      "cell": [
+        7,
+        6
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": "node_0003"
+    },
+    {
+      "id": "node_0005",
+      "kind": 0,
+      "cell": [
+        6,
+        7
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0006",
+      "kind": 3,
+      "cell": [
+        7,
+        7
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    }
+  ],
+  "connections": [
+    {
+      "from": "node_0001",
+      "to": "node_0002",
+      "from_port": 0,
+      "to_port": 0,
+      "path": [
+        [
+          2,
+          5
+        ],
+        [
+          3,
+          5
+        ]
+      ],
+      "bridge_mode": 0
+    },
+    {
+      "from": "node_0002",
+      "to": "node_0003",
+      "from_port": 0,
+      "to_port": 0,
+      "path": [
+        [
+          3,
+          5
+        ],
+        [
+          4,
+          6
+        ]
+      ],
+      "bridge_mode": 0
+    },
+    {
+      "from": "node_0004",
+      "to": "node_0005",
+      "from_port": 0,
+      "to_port": 0,
+      "path": [
+        [
+          7,
+          6
+        ],
+        [
+          6,
+          7
+        ]
+      ],
+      "bridge_mode": 0
+    },
+    {
+      "from": "node_0005",
+      "to": "node_0006",
+      "from_port": 0,
+      "to_port": 0,
+      "path": [
+        [
+          6,
+          7
+        ],
+        [
+          7,
+          7
+        ]
+      ],
+      "bridge_mode": 0
+    }
+  ],
+  "allow_reverse_travel": false,
+  "player_blocker_count": 0,
+  "level_title": "Level 004 \u2014 The Other Side",
+  "player_hint": "Signals pass through a paired Wormhole without a physical bridge."
+}
