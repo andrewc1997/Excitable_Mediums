@@ -1,0 +1,4252 @@
+{
+  "version": 8,
+  "grid_type": "square",
+  "columns": 36,
+  "rows": 34,
+  "allow_reverse_travel": true,
+  "player_blocker_count": 0,
+  "level_title": "Level 021 \u2014 The Grand Circuit",
+  "nodes": [
+    {
+      "id": "node_0001",
+      "kind": 13,
+      "cell": [
+        1,
+        16
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0002",
+      "kind": 0,
+      "cell": [
+        3,
+        16
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0003",
+      "kind": 1,
+      "cell": [
+        5,
+        16
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": true,
+      "port_rotation_steps": 1,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0004",
+      "kind": 1,
+      "cell": [
+        9,
+        8
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0005",
+      "kind": 1,
+      "cell": [
+        9,
+        24
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0006",
+      "kind": 1,
+      "cell": [
+        13,
+        4
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": true,
+      "port_rotation_steps": 2,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0007",
+      "kind": 1,
+      "cell": [
+        13,
+        12
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0008",
+      "kind": 1,
+      "cell": [
+        13,
+        20
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0009",
+      "kind": 1,
+      "cell": [
+        13,
+        28
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": true,
+      "port_rotation_steps": 1,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0010",
+      "kind": 0,
+      "cell": [
+        20,
+        2
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0011",
+      "kind": 12,
+      "cell": [
+        20,
+        1
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 0,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0012",
+      "kind": 3,
+      "cell": [
+        20,
+        0
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0013",
+      "kind": 0,
+      "cell": [
+        21,
+        2
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0014",
+      "kind": 0,
+      "cell": [
+        22,
+        2
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0015",
+      "kind": 0,
+      "cell": [
+        23,
+        2
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0016",
+      "kind": 0,
+      "cell": [
+        24,
+        2
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0017",
+      "kind": 0,
+      "cell": [
+        25,
+        2
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0018",
+      "kind": 0,
+      "cell": [
+        26,
+        2
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0019",
+      "kind": 0,
+      "cell": [
+        27,
+        2
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0020",
+      "kind": 11,
+      "cell": [
+        28,
+        2
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0021",
+      "kind": 0,
+      "cell": [
+        20,
+        6
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0022",
+      "kind": 12,
+      "cell": [
+        20,
+        5
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 0,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0023",
+      "kind": 3,
+      "cell": [
+        20,
+        4
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0024",
+      "kind": 0,
+      "cell": [
+        21,
+        6
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0025",
+      "kind": 0,
+      "cell": [
+        22,
+        6
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0026",
+      "kind": 0,
+      "cell": [
+        23,
+        6
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0027",
+      "kind": 0,
+      "cell": [
+        24,
+        6
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0028",
+      "kind": 0,
+      "cell": [
+        25,
+        6
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0029",
+      "kind": 0,
+      "cell": [
+        26,
+        6
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0030",
+      "kind": 0,
+      "cell": [
+        27,
+        6
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0031",
+      "kind": 11,
+      "cell": [
+        28,
+        6
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0032",
+      "kind": 0,
+      "cell": [
+        20,
+        10
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0033",
+      "kind": 12,
+      "cell": [
+        20,
+        9
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 0,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0034",
+      "kind": 3,
+      "cell": [
+        20,
+        8
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0035",
+      "kind": 0,
+      "cell": [
+        21,
+        10
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0036",
+      "kind": 0,
+      "cell": [
+        22,
+        10
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0037",
+      "kind": 0,
+      "cell": [
+        23,
+        10
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0038",
+      "kind": 0,
+      "cell": [
+        24,
+        10
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0039",
+      "kind": 0,
+      "cell": [
+        25,
+        10
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0040",
+      "kind": 0,
+      "cell": [
+        26,
+        10
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0041",
+      "kind": 0,
+      "cell": [
+        27,
+        10
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0042",
+      "kind": 11,
+      "cell": [
+        28,
+        10
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0043",
+      "kind": 0,
+      "cell": [
+        20,
+        14
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0044",
+      "kind": 12,
+      "cell": [
+        20,
+        13
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 0,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0045",
+      "kind": 3,
+      "cell": [
+        20,
+        12
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0046",
+      "kind": 0,
+      "cell": [
+        21,
+        14
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0047",
+      "kind": 0,
+      "cell": [
+        22,
+        14
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0048",
+      "kind": 0,
+      "cell": [
+        23,
+        14
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0049",
+      "kind": 0,
+      "cell": [
+        24,
+        14
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0050",
+      "kind": 0,
+      "cell": [
+        25,
+        14
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0051",
+      "kind": 0,
+      "cell": [
+        26,
+        14
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0052",
+      "kind": 0,
+      "cell": [
+        27,
+        14
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0053",
+      "kind": 11,
+      "cell": [
+        28,
+        14
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0054",
+      "kind": 0,
+      "cell": [
+        20,
+        18
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0055",
+      "kind": 12,
+      "cell": [
+        20,
+        17
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 0,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0056",
+      "kind": 3,
+      "cell": [
+        20,
+        16
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0057",
+      "kind": 0,
+      "cell": [
+        21,
+        18
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0058",
+      "kind": 0,
+      "cell": [
+        22,
+        18
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0059",
+      "kind": 0,
+      "cell": [
+        23,
+        18
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0060",
+      "kind": 0,
+      "cell": [
+        24,
+        18
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0061",
+      "kind": 0,
+      "cell": [
+        25,
+        18
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0062",
+      "kind": 0,
+      "cell": [
+        26,
+        18
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0063",
+      "kind": 0,
+      "cell": [
+        27,
+        18
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0064",
+      "kind": 11,
+      "cell": [
+        28,
+        18
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0065",
+      "kind": 0,
+      "cell": [
+        20,
+        22
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0066",
+      "kind": 12,
+      "cell": [
+        20,
+        21
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 0,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0067",
+      "kind": 3,
+      "cell": [
+        20,
+        20
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0068",
+      "kind": 0,
+      "cell": [
+        21,
+        22
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0069",
+      "kind": 0,
+      "cell": [
+        22,
+        22
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0070",
+      "kind": 0,
+      "cell": [
+        23,
+        22
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0071",
+      "kind": 0,
+      "cell": [
+        24,
+        22
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0072",
+      "kind": 0,
+      "cell": [
+        25,
+        22
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0073",
+      "kind": 0,
+      "cell": [
+        26,
+        22
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0074",
+      "kind": 0,
+      "cell": [
+        27,
+        22
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0075",
+      "kind": 11,
+      "cell": [
+        28,
+        22
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0076",
+      "kind": 0,
+      "cell": [
+        20,
+        26
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0077",
+      "kind": 12,
+      "cell": [
+        20,
+        25
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 0,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0078",
+      "kind": 3,
+      "cell": [
+        20,
+        24
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0079",
+      "kind": 0,
+      "cell": [
+        21,
+        26
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0080",
+      "kind": 0,
+      "cell": [
+        22,
+        26
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0081",
+      "kind": 0,
+      "cell": [
+        23,
+        26
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0082",
+      "kind": 0,
+      "cell": [
+        24,
+        26
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0083",
+      "kind": 0,
+      "cell": [
+        25,
+        26
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0084",
+      "kind": 0,
+      "cell": [
+        26,
+        26
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0085",
+      "kind": 0,
+      "cell": [
+        27,
+        26
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0086",
+      "kind": 11,
+      "cell": [
+        28,
+        26
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0087",
+      "kind": 0,
+      "cell": [
+        20,
+        30
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0088",
+      "kind": 12,
+      "cell": [
+        20,
+        29
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 0,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0089",
+      "kind": 3,
+      "cell": [
+        20,
+        28
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0090",
+      "kind": 0,
+      "cell": [
+        21,
+        30
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0091",
+      "kind": 0,
+      "cell": [
+        22,
+        30
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0092",
+      "kind": 0,
+      "cell": [
+        23,
+        30
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0093",
+      "kind": 0,
+      "cell": [
+        24,
+        30
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0094",
+      "kind": 0,
+      "cell": [
+        25,
+        30
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0095",
+      "kind": 0,
+      "cell": [
+        26,
+        30
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0096",
+      "kind": 0,
+      "cell": [
+        27,
+        30
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0097",
+      "kind": 11,
+      "cell": [
+        28,
+        30
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    }
+  ],
+  "connections": [
+    {
+      "from": "node_0001",
+      "to": "node_0002",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          1,
+          16
+        ],
+        [
+          2,
+          16
+        ],
+        [
+          3,
+          16
+        ]
+      ]
+    },
+    {
+      "from": "node_0002",
+      "to": "node_0003",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          3,
+          16
+        ],
+        [
+          4,
+          16
+        ],
+        [
+          5,
+          16
+        ]
+      ]
+    },
+    {
+      "from": "node_0003",
+      "to": "node_0004",
+      "from_port": "north",
+      "to_port": "west",
+      "path": [
+        [
+          5,
+          16
+        ],
+        [
+          5,
+          15
+        ],
+        [
+          5,
+          14
+        ],
+        [
+          5,
+          13
+        ],
+        [
+          5,
+          12
+        ],
+        [
+          5,
+          11
+        ],
+        [
+          5,
+          10
+        ],
+        [
+          5,
+          9
+        ],
+        [
+          5,
+          8
+        ],
+        [
+          6,
+          8
+        ],
+        [
+          7,
+          8
+        ],
+        [
+          8,
+          8
+        ],
+        [
+          9,
+          8
+        ]
+      ]
+    },
+    {
+      "from": "node_0003",
+      "to": "node_0005",
+      "from_port": "south",
+      "to_port": "west",
+      "path": [
+        [
+          5,
+          16
+        ],
+        [
+          5,
+          17
+        ],
+        [
+          5,
+          18
+        ],
+        [
+          5,
+          19
+        ],
+        [
+          5,
+          20
+        ],
+        [
+          5,
+          21
+        ],
+        [
+          5,
+          22
+        ],
+        [
+          5,
+          23
+        ],
+        [
+          5,
+          24
+        ],
+        [
+          6,
+          24
+        ],
+        [
+          7,
+          24
+        ],
+        [
+          8,
+          24
+        ],
+        [
+          9,
+          24
+        ]
+      ]
+    },
+    {
+      "from": "node_0004",
+      "to": "node_0006",
+      "from_port": "north",
+      "to_port": "west",
+      "path": [
+        [
+          9,
+          8
+        ],
+        [
+          9,
+          7
+        ],
+        [
+          9,
+          6
+        ],
+        [
+          9,
+          5
+        ],
+        [
+          9,
+          4
+        ],
+        [
+          10,
+          4
+        ],
+        [
+          11,
+          4
+        ],
+        [
+          12,
+          4
+        ],
+        [
+          13,
+          4
+        ]
+      ]
+    },
+    {
+      "from": "node_0004",
+      "to": "node_0007",
+      "from_port": "south",
+      "to_port": "west",
+      "path": [
+        [
+          9,
+          8
+        ],
+        [
+          9,
+          9
+        ],
+        [
+          9,
+          10
+        ],
+        [
+          9,
+          11
+        ],
+        [
+          9,
+          12
+        ],
+        [
+          10,
+          12
+        ],
+        [
+          11,
+          12
+        ],
+        [
+          12,
+          12
+        ],
+        [
+          13,
+          12
+        ]
+      ]
+    },
+    {
+      "from": "node_0005",
+      "to": "node_0008",
+      "from_port": "north",
+      "to_port": "west",
+      "path": [
+        [
+          9,
+          24
+        ],
+        [
+          9,
+          23
+        ],
+        [
+          9,
+          22
+        ],
+        [
+          9,
+          21
+        ],
+        [
+          9,
+          20
+        ],
+        [
+          10,
+          20
+        ],
+        [
+          11,
+          20
+        ],
+        [
+          12,
+          20
+        ],
+        [
+          13,
+          20
+        ]
+      ]
+    },
+    {
+      "from": "node_0005",
+      "to": "node_0009",
+      "from_port": "south",
+      "to_port": "west",
+      "path": [
+        [
+          9,
+          24
+        ],
+        [
+          9,
+          25
+        ],
+        [
+          9,
+          26
+        ],
+        [
+          9,
+          27
+        ],
+        [
+          9,
+          28
+        ],
+        [
+          10,
+          28
+        ],
+        [
+          11,
+          28
+        ],
+        [
+          12,
+          28
+        ],
+        [
+          13,
+          28
+        ]
+      ]
+    },
+    {
+      "from": "node_0006",
+      "to": "node_0010",
+      "from_port": "north",
+      "to_port": "west",
+      "path": [
+        [
+          13,
+          4
+        ],
+        [
+          13,
+          3
+        ],
+        [
+          13,
+          2
+        ],
+        [
+          14,
+          2
+        ],
+        [
+          15,
+          2
+        ],
+        [
+          16,
+          2
+        ],
+        [
+          17,
+          2
+        ],
+        [
+          18,
+          2
+        ],
+        [
+          19,
+          2
+        ],
+        [
+          20,
+          2
+        ]
+      ],
+      "bridge_mode": 1
+    },
+    {
+      "from": "node_0010",
+      "to": "node_0011",
+      "from_port": "north",
+      "to_port": "south",
+      "path": [
+        [
+          20,
+          2
+        ],
+        [
+          20,
+          1
+        ]
+      ]
+    },
+    {
+      "from": "node_0011",
+      "to": "node_0012",
+      "from_port": "north",
+      "to_port": "south",
+      "path": [
+        [
+          20,
+          1
+        ],
+        [
+          20,
+          0
+        ]
+      ]
+    },
+    {
+      "from": "node_0010",
+      "to": "node_0013",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          20,
+          2
+        ],
+        [
+          21,
+          2
+        ]
+      ]
+    },
+    {
+      "from": "node_0013",
+      "to": "node_0014",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          21,
+          2
+        ],
+        [
+          22,
+          2
+        ]
+      ]
+    },
+    {
+      "from": "node_0014",
+      "to": "node_0015",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          22,
+          2
+        ],
+        [
+          23,
+          2
+        ]
+      ]
+    },
+    {
+      "from": "node_0015",
+      "to": "node_0016",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          23,
+          2
+        ],
+        [
+          24,
+          2
+        ]
+      ]
+    },
+    {
+      "from": "node_0016",
+      "to": "node_0017",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          24,
+          2
+        ],
+        [
+          25,
+          2
+        ]
+      ]
+    },
+    {
+      "from": "node_0017",
+      "to": "node_0018",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          25,
+          2
+        ],
+        [
+          26,
+          2
+        ]
+      ]
+    },
+    {
+      "from": "node_0018",
+      "to": "node_0019",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          26,
+          2
+        ],
+        [
+          27,
+          2
+        ]
+      ]
+    },
+    {
+      "from": "node_0019",
+      "to": "node_0020",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          27,
+          2
+        ],
+        [
+          28,
+          2
+        ]
+      ]
+    },
+    {
+      "from": "node_0006",
+      "to": "node_0021",
+      "from_port": "south",
+      "to_port": "west",
+      "path": [
+        [
+          13,
+          4
+        ],
+        [
+          13,
+          5
+        ],
+        [
+          13,
+          6
+        ],
+        [
+          14,
+          6
+        ],
+        [
+          15,
+          6
+        ],
+        [
+          16,
+          6
+        ],
+        [
+          17,
+          6
+        ],
+        [
+          18,
+          6
+        ],
+        [
+          19,
+          6
+        ],
+        [
+          20,
+          6
+        ]
+      ],
+      "bridge_mode": 1
+    },
+    {
+      "from": "node_0021",
+      "to": "node_0022",
+      "from_port": "north",
+      "to_port": "south",
+      "path": [
+        [
+          20,
+          6
+        ],
+        [
+          20,
+          5
+        ]
+      ]
+    },
+    {
+      "from": "node_0022",
+      "to": "node_0023",
+      "from_port": "north",
+      "to_port": "south",
+      "path": [
+        [
+          20,
+          5
+        ],
+        [
+          20,
+          4
+        ]
+      ]
+    },
+    {
+      "from": "node_0021",
+      "to": "node_0024",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          20,
+          6
+        ],
+        [
+          21,
+          6
+        ]
+      ]
+    },
+    {
+      "from": "node_0024",
+      "to": "node_0025",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          21,
+          6
+        ],
+        [
+          22,
+          6
+        ]
+      ]
+    },
+    {
+      "from": "node_0025",
+      "to": "node_0026",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          22,
+          6
+        ],
+        [
+          23,
+          6
+        ]
+      ]
+    },
+    {
+      "from": "node_0026",
+      "to": "node_0027",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          23,
+          6
+        ],
+        [
+          24,
+          6
+        ]
+      ]
+    },
+    {
+      "from": "node_0027",
+      "to": "node_0028",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          24,
+          6
+        ],
+        [
+          25,
+          6
+        ]
+      ]
+    },
+    {
+      "from": "node_0028",
+      "to": "node_0029",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          25,
+          6
+        ],
+        [
+          26,
+          6
+        ]
+      ]
+    },
+    {
+      "from": "node_0029",
+      "to": "node_0030",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          26,
+          6
+        ],
+        [
+          27,
+          6
+        ]
+      ]
+    },
+    {
+      "from": "node_0030",
+      "to": "node_0031",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          27,
+          6
+        ],
+        [
+          28,
+          6
+        ]
+      ]
+    },
+    {
+      "from": "node_0007",
+      "to": "node_0032",
+      "from_port": "north",
+      "to_port": "west",
+      "path": [
+        [
+          13,
+          12
+        ],
+        [
+          13,
+          11
+        ],
+        [
+          13,
+          10
+        ],
+        [
+          14,
+          10
+        ],
+        [
+          15,
+          10
+        ],
+        [
+          16,
+          10
+        ],
+        [
+          17,
+          10
+        ],
+        [
+          18,
+          10
+        ],
+        [
+          19,
+          10
+        ],
+        [
+          20,
+          10
+        ]
+      ],
+      "bridge_mode": 1
+    },
+    {
+      "from": "node_0032",
+      "to": "node_0033",
+      "from_port": "north",
+      "to_port": "south",
+      "path": [
+        [
+          20,
+          10
+        ],
+        [
+          20,
+          9
+        ]
+      ]
+    },
+    {
+      "from": "node_0033",
+      "to": "node_0034",
+      "from_port": "north",
+      "to_port": "south",
+      "path": [
+        [
+          20,
+          9
+        ],
+        [
+          20,
+          8
+        ]
+      ]
+    },
+    {
+      "from": "node_0032",
+      "to": "node_0035",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          20,
+          10
+        ],
+        [
+          21,
+          10
+        ]
+      ]
+    },
+    {
+      "from": "node_0035",
+      "to": "node_0036",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          21,
+          10
+        ],
+        [
+          22,
+          10
+        ]
+      ]
+    },
+    {
+      "from": "node_0036",
+      "to": "node_0037",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          22,
+          10
+        ],
+        [
+          23,
+          10
+        ]
+      ]
+    },
+    {
+      "from": "node_0037",
+      "to": "node_0038",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          23,
+          10
+        ],
+        [
+          24,
+          10
+        ]
+      ]
+    },
+    {
+      "from": "node_0038",
+      "to": "node_0039",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          24,
+          10
+        ],
+        [
+          25,
+          10
+        ]
+      ]
+    },
+    {
+      "from": "node_0039",
+      "to": "node_0040",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          25,
+          10
+        ],
+        [
+          26,
+          10
+        ]
+      ]
+    },
+    {
+      "from": "node_0040",
+      "to": "node_0041",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          26,
+          10
+        ],
+        [
+          27,
+          10
+        ]
+      ]
+    },
+    {
+      "from": "node_0041",
+      "to": "node_0042",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          27,
+          10
+        ],
+        [
+          28,
+          10
+        ]
+      ]
+    },
+    {
+      "from": "node_0007",
+      "to": "node_0043",
+      "from_port": "south",
+      "to_port": "west",
+      "path": [
+        [
+          13,
+          12
+        ],
+        [
+          13,
+          13
+        ],
+        [
+          13,
+          14
+        ],
+        [
+          14,
+          14
+        ],
+        [
+          15,
+          14
+        ],
+        [
+          16,
+          14
+        ],
+        [
+          17,
+          14
+        ],
+        [
+          18,
+          14
+        ],
+        [
+          19,
+          14
+        ],
+        [
+          20,
+          14
+        ]
+      ],
+      "bridge_mode": 1
+    },
+    {
+      "from": "node_0043",
+      "to": "node_0044",
+      "from_port": "north",
+      "to_port": "south",
+      "path": [
+        [
+          20,
+          14
+        ],
+        [
+          20,
+          13
+        ]
+      ]
+    },
+    {
+      "from": "node_0044",
+      "to": "node_0045",
+      "from_port": "north",
+      "to_port": "south",
+      "path": [
+        [
+          20,
+          13
+        ],
+        [
+          20,
+          12
+        ]
+      ]
+    },
+    {
+      "from": "node_0043",
+      "to": "node_0046",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          20,
+          14
+        ],
+        [
+          21,
+          14
+        ]
+      ]
+    },
+    {
+      "from": "node_0046",
+      "to": "node_0047",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          21,
+          14
+        ],
+        [
+          22,
+          14
+        ]
+      ]
+    },
+    {
+      "from": "node_0047",
+      "to": "node_0048",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          22,
+          14
+        ],
+        [
+          23,
+          14
+        ]
+      ]
+    },
+    {
+      "from": "node_0048",
+      "to": "node_0049",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          23,
+          14
+        ],
+        [
+          24,
+          14
+        ]
+      ]
+    },
+    {
+      "from": "node_0049",
+      "to": "node_0050",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          24,
+          14
+        ],
+        [
+          25,
+          14
+        ]
+      ]
+    },
+    {
+      "from": "node_0050",
+      "to": "node_0051",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          25,
+          14
+        ],
+        [
+          26,
+          14
+        ]
+      ]
+    },
+    {
+      "from": "node_0051",
+      "to": "node_0052",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          26,
+          14
+        ],
+        [
+          27,
+          14
+        ]
+      ]
+    },
+    {
+      "from": "node_0052",
+      "to": "node_0053",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          27,
+          14
+        ],
+        [
+          28,
+          14
+        ]
+      ]
+    },
+    {
+      "from": "node_0008",
+      "to": "node_0054",
+      "from_port": "north",
+      "to_port": "west",
+      "path": [
+        [
+          13,
+          20
+        ],
+        [
+          13,
+          19
+        ],
+        [
+          13,
+          18
+        ],
+        [
+          14,
+          18
+        ],
+        [
+          15,
+          18
+        ],
+        [
+          16,
+          18
+        ],
+        [
+          17,
+          18
+        ],
+        [
+          18,
+          18
+        ],
+        [
+          19,
+          18
+        ],
+        [
+          20,
+          18
+        ]
+      ],
+      "bridge_mode": 1
+    },
+    {
+      "from": "node_0054",
+      "to": "node_0055",
+      "from_port": "north",
+      "to_port": "south",
+      "path": [
+        [
+          20,
+          18
+        ],
+        [
+          20,
+          17
+        ]
+      ]
+    },
+    {
+      "from": "node_0055",
+      "to": "node_0056",
+      "from_port": "north",
+      "to_port": "south",
+      "path": [
+        [
+          20,
+          17
+        ],
+        [
+          20,
+          16
+        ]
+      ]
+    },
+    {
+      "from": "node_0054",
+      "to": "node_0057",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          20,
+          18
+        ],
+        [
+          21,
+          18
+        ]
+      ]
+    },
+    {
+      "from": "node_0057",
+      "to": "node_0058",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          21,
+          18
+        ],
+        [
+          22,
+          18
+        ]
+      ]
+    },
+    {
+      "from": "node_0058",
+      "to": "node_0059",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          22,
+          18
+        ],
+        [
+          23,
+          18
+        ]
+      ]
+    },
+    {
+      "from": "node_0059",
+      "to": "node_0060",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          23,
+          18
+        ],
+        [
+          24,
+          18
+        ]
+      ]
+    },
+    {
+      "from": "node_0060",
+      "to": "node_0061",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          24,
+          18
+        ],
+        [
+          25,
+          18
+        ]
+      ]
+    },
+    {
+      "from": "node_0061",
+      "to": "node_0062",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          25,
+          18
+        ],
+        [
+          26,
+          18
+        ]
+      ]
+    },
+    {
+      "from": "node_0062",
+      "to": "node_0063",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          26,
+          18
+        ],
+        [
+          27,
+          18
+        ]
+      ]
+    },
+    {
+      "from": "node_0063",
+      "to": "node_0064",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          27,
+          18
+        ],
+        [
+          28,
+          18
+        ]
+      ]
+    },
+    {
+      "from": "node_0008",
+      "to": "node_0065",
+      "from_port": "south",
+      "to_port": "west",
+      "path": [
+        [
+          13,
+          20
+        ],
+        [
+          13,
+          21
+        ],
+        [
+          13,
+          22
+        ],
+        [
+          14,
+          22
+        ],
+        [
+          15,
+          22
+        ],
+        [
+          16,
+          22
+        ],
+        [
+          17,
+          22
+        ],
+        [
+          18,
+          22
+        ],
+        [
+          19,
+          22
+        ],
+        [
+          20,
+          22
+        ]
+      ],
+      "bridge_mode": 1
+    },
+    {
+      "from": "node_0065",
+      "to": "node_0066",
+      "from_port": "north",
+      "to_port": "south",
+      "path": [
+        [
+          20,
+          22
+        ],
+        [
+          20,
+          21
+        ]
+      ]
+    },
+    {
+      "from": "node_0066",
+      "to": "node_0067",
+      "from_port": "north",
+      "to_port": "south",
+      "path": [
+        [
+          20,
+          21
+        ],
+        [
+          20,
+          20
+        ]
+      ]
+    },
+    {
+      "from": "node_0065",
+      "to": "node_0068",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          20,
+          22
+        ],
+        [
+          21,
+          22
+        ]
+      ]
+    },
+    {
+      "from": "node_0068",
+      "to": "node_0069",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          21,
+          22
+        ],
+        [
+          22,
+          22
+        ]
+      ]
+    },
+    {
+      "from": "node_0069",
+      "to": "node_0070",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          22,
+          22
+        ],
+        [
+          23,
+          22
+        ]
+      ]
+    },
+    {
+      "from": "node_0070",
+      "to": "node_0071",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          23,
+          22
+        ],
+        [
+          24,
+          22
+        ]
+      ]
+    },
+    {
+      "from": "node_0071",
+      "to": "node_0072",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          24,
+          22
+        ],
+        [
+          25,
+          22
+        ]
+      ]
+    },
+    {
+      "from": "node_0072",
+      "to": "node_0073",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          25,
+          22
+        ],
+        [
+          26,
+          22
+        ]
+      ]
+    },
+    {
+      "from": "node_0073",
+      "to": "node_0074",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          26,
+          22
+        ],
+        [
+          27,
+          22
+        ]
+      ]
+    },
+    {
+      "from": "node_0074",
+      "to": "node_0075",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          27,
+          22
+        ],
+        [
+          28,
+          22
+        ]
+      ]
+    },
+    {
+      "from": "node_0009",
+      "to": "node_0076",
+      "from_port": "north",
+      "to_port": "west",
+      "path": [
+        [
+          13,
+          28
+        ],
+        [
+          13,
+          27
+        ],
+        [
+          13,
+          26
+        ],
+        [
+          14,
+          26
+        ],
+        [
+          15,
+          26
+        ],
+        [
+          16,
+          26
+        ],
+        [
+          17,
+          26
+        ],
+        [
+          18,
+          26
+        ],
+        [
+          19,
+          26
+        ],
+        [
+          20,
+          26
+        ]
+      ],
+      "bridge_mode": 1
+    },
+    {
+      "from": "node_0076",
+      "to": "node_0077",
+      "from_port": "north",
+      "to_port": "south",
+      "path": [
+        [
+          20,
+          26
+        ],
+        [
+          20,
+          25
+        ]
+      ]
+    },
+    {
+      "from": "node_0077",
+      "to": "node_0078",
+      "from_port": "north",
+      "to_port": "south",
+      "path": [
+        [
+          20,
+          25
+        ],
+        [
+          20,
+          24
+        ]
+      ]
+    },
+    {
+      "from": "node_0076",
+      "to": "node_0079",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          20,
+          26
+        ],
+        [
+          21,
+          26
+        ]
+      ]
+    },
+    {
+      "from": "node_0079",
+      "to": "node_0080",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          21,
+          26
+        ],
+        [
+          22,
+          26
+        ]
+      ]
+    },
+    {
+      "from": "node_0080",
+      "to": "node_0081",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          22,
+          26
+        ],
+        [
+          23,
+          26
+        ]
+      ]
+    },
+    {
+      "from": "node_0081",
+      "to": "node_0082",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          23,
+          26
+        ],
+        [
+          24,
+          26
+        ]
+      ]
+    },
+    {
+      "from": "node_0082",
+      "to": "node_0083",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          24,
+          26
+        ],
+        [
+          25,
+          26
+        ]
+      ]
+    },
+    {
+      "from": "node_0083",
+      "to": "node_0084",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          25,
+          26
+        ],
+        [
+          26,
+          26
+        ]
+      ]
+    },
+    {
+      "from": "node_0084",
+      "to": "node_0085",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          26,
+          26
+        ],
+        [
+          27,
+          26
+        ]
+      ]
+    },
+    {
+      "from": "node_0085",
+      "to": "node_0086",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          27,
+          26
+        ],
+        [
+          28,
+          26
+        ]
+      ]
+    },
+    {
+      "from": "node_0009",
+      "to": "node_0087",
+      "from_port": "south",
+      "to_port": "west",
+      "path": [
+        [
+          13,
+          28
+        ],
+        [
+          13,
+          29
+        ],
+        [
+          13,
+          30
+        ],
+        [
+          14,
+          30
+        ],
+        [
+          15,
+          30
+        ],
+        [
+          16,
+          30
+        ],
+        [
+          17,
+          30
+        ],
+        [
+          18,
+          30
+        ],
+        [
+          19,
+          30
+        ],
+        [
+          20,
+          30
+        ]
+      ],
+      "bridge_mode": 1
+    },
+    {
+      "from": "node_0087",
+      "to": "node_0088",
+      "from_port": "north",
+      "to_port": "south",
+      "path": [
+        [
+          20,
+          30
+        ],
+        [
+          20,
+          29
+        ]
+      ]
+    },
+    {
+      "from": "node_0088",
+      "to": "node_0089",
+      "from_port": "north",
+      "to_port": "south",
+      "path": [
+        [
+          20,
+          29
+        ],
+        [
+          20,
+          28
+        ]
+      ]
+    },
+    {
+      "from": "node_0087",
+      "to": "node_0090",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          20,
+          30
+        ],
+        [
+          21,
+          30
+        ]
+      ]
+    },
+    {
+      "from": "node_0090",
+      "to": "node_0091",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          21,
+          30
+        ],
+        [
+          22,
+          30
+        ]
+      ]
+    },
+    {
+      "from": "node_0091",
+      "to": "node_0092",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          22,
+          30
+        ],
+        [
+          23,
+          30
+        ]
+      ]
+    },
+    {
+      "from": "node_0092",
+      "to": "node_0093",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          23,
+          30
+        ],
+        [
+          24,
+          30
+        ]
+      ]
+    },
+    {
+      "from": "node_0093",
+      "to": "node_0094",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          24,
+          30
+        ],
+        [
+          25,
+          30
+        ]
+      ]
+    },
+    {
+      "from": "node_0094",
+      "to": "node_0095",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          25,
+          30
+        ],
+        [
+          26,
+          30
+        ]
+      ]
+    },
+    {
+      "from": "node_0095",
+      "to": "node_0096",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          26,
+          30
+        ],
+        [
+          27,
+          30
+        ]
+      ]
+    },
+    {
+      "from": "node_0096",
+      "to": "node_0097",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
+        [
+          27,
+          30
+        ],
+        [
+          28,
+          30
+        ]
+      ]
+    }
+  ]
+}

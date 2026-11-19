@@ -72,6 +72,60 @@
 			"title": "Three Steps Ahead",
 			"description": "Configure two switches so a Splitter can send a pulse to each Goal.",
 			"path": "res://levels/level_012_three_steps_ahead.json"
+		},
+		{
+			"id": "level_013",
+			"title": "Wrong Way",
+			"description": "Two starting points approach the same One-Way Gate. Only an eastbound pulse can pass.",
+			"path": "res://levels/level_013_wrong_way.json"
+		},
+		{
+			"id": "level_014",
+			"title": "The Detour",
+			"description": "A route changes direction twice. The gates allow only eastbound and southbound passage.",
+			"path": "res://levels/level_014_the_detour.json"
+		},
+		{
+			"id": "level_015",
+			"title": "The Wrong Arrival",
+			"description": "One Splitter sends a useful pulse east and another into the same gate from the wrong side.",
+			"path": "res://levels/level_015_the_wrong_arrival.json"
+		},
+		{
+			"id": "level_016",
+			"title": "Against the Flow",
+			"description": "Two Splitter branches must pass gates pointing east and north; a false Begin approaches the wrong side.",
+			"path": "res://levels/level_016_against_the_flow.json"
+		},
+		{
+			"id": "level_017",
+			"title": "Return Ticket",
+			"description": "A Bounce Node sends its pulse back. A directional bridge keeps the return from reaching Begin.",
+			"path": "res://levels/level_017_return_ticket.json"
+		},
+		{
+			"id": "level_018",
+			"title": "Up and Back",
+			"description": "Return northward from a Bounce Node, then take a different route to the Goal.",
+			"path": "res://levels/level_018_up_and_back.json"
+		},
+		{
+			"id": "level_019",
+			"title": "Double Rebound",
+			"description": "Two pulses bounce back independently, then turn towards different Goals.",
+			"path": "res://levels/level_019_double_rebound.json"
+		},
+		{
+			"id": "level_020",
+			"title": "The Echo Network",
+			"description": "Three returning pulses must find three separate Goals. Read both Splitter branches before launch.",
+			"path": "res://levels/level_020_the_echo_network.json"
+		},
+		{
+			"id": "level_021",
+			"title": "The Grand Circuit",
+			"description": "A huge branching network: eight returning journeys, eight One-Way Gates, and three rotating Splitters.",
+			"path": "res://levels/level_021_the_grand_circuit.json"
 		}
 	]
 }
