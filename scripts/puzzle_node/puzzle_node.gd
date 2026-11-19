@@ -1178,8 +1178,9 @@ func _draw_player_port_rotor() -> bool:
 		var ink: Color = Color("#F4FFFF")
 		var width: float = 3.8
 		if closed:
-			ink = Color("#F04B51") if kind == Kind.ALTERNATING else Color("#8295A3")
-			width = 4.1 if kind == Kind.ALTERNATING else 2.8
+			# Closed Alternating arm: subtle grey, never red.
+			ink = Color("#8E9DA8", 0.55) if kind == Kind.ALTERNATING else Color("#8295A3")
+			width = 2.8
 		draw_line(Vector2.ZERO, direction * 16.0, ink, width, true)
 
 	draw_circle(Vector2.ZERO, 2.4, Color.WHITE)

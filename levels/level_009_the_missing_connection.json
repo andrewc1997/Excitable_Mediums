@@ -3,12 +3,15 @@
   "grid_type": "honeycomb",
   "columns": 12,
   "rows": 12,
+  "allow_reverse_travel": true,
+  "player_blocker_count": 0,
+  "level_title": "Level 009 — The Missing Connection",
   "nodes": [
     {
       "id": "node_0001",
       "kind": 13,
       "cell": [
-        3,
+        4,
         5
       ],
       "cap": 1,
@@ -29,10 +32,10 @@
     },
     {
       "id": "node_0002",
-      "kind": 14,
+      "kind": 2,
       "cell": [
-        4,
-        6
+        5,
+        5
       ],
       "cap": 1,
       "refractory": 2,
@@ -46,16 +49,16 @@
       "repeat_interval": 2,
       "one_way_direction": 1,
       "alternating_first_branch": 0,
-      "player_editable": false,
+      "player_editable": true,
       "port_rotation_steps": 0,
-      "wormhole_pair": "node_0003"
+      "wormhole_pair": ""
     },
     {
       "id": "node_0003",
-      "kind": 14,
+      "kind": 3,
       "cell": [
-        7,
-        6
+        6,
+        4
       ],
       "cap": 1,
       "refractory": 2,
@@ -71,14 +74,14 @@
       "alternating_first_branch": 0,
       "player_editable": false,
       "port_rotation_steps": 0,
-      "wormhole_pair": "node_0002"
+      "wormhole_pair": ""
     },
     {
       "id": "node_0004",
-      "kind": 3,
+      "kind": 0,
       "cell": [
         6,
-        7
+        6
       ],
       "cap": 1,
       "refractory": 2,
@@ -99,40 +102,52 @@
   ],
   "connections": [
     {
+      "from": "node_0001",
       "to": "node_0002",
-      "from_port": 0,
-      "to_port": 0,
+      "from_port": "east",
+      "to_port": "west",
       "path": [
         [
-          3,
+          4,
           5
         ],
         [
-          4,
-          6
+          5,
+          5
         ]
-      ],
-      "bridge_mode": 0,
-      "from": "node_0001"
+      ]
     },
     {
-      "to": "node_0004",
-      "from_port": 0,
-      "to_port": 0,
+      "from": "node_0002",
+      "to": "node_0003",
+      "from_port": "north_east",
+      "to_port": "south_west",
       "path": [
         [
-          7,
-          6
+          5,
+          5
         ],
         [
           6,
-          7
+          4
         ]
-      ],
-      "bridge_mode": 0,
-      "from": "node_0003"
+      ]
+    },
+    {
+      "from": "node_0002",
+      "to": "node_0004",
+      "from_port": "south_east",
+      "to_port": "north_west",
+      "path": [
+        [
+          5,
+          5
+        ],
+        [
+          6,
+          6
+        ]
+      ]
     }
-  ],
-  "allow_reverse_travel": false,
-  "player_blocker_count": 0
+  ]
 }

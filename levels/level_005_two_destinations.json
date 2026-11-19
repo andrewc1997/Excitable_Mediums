@@ -1,15 +1,18 @@
 {
   "version": 8,
-  "grid_type": "square",
+  "grid_type": "honeycomb",
   "columns": 12,
   "rows": 12,
+  "allow_reverse_travel": false,
+  "player_blocker_count": 0,
+  "level_title": "Level 005 — Two Destinations",
   "nodes": [
     {
       "id": "node_0001",
       "kind": 13,
       "cell": [
-        1,
-        4
+        3,
+        5
       ],
       "cap": 1,
       "refractory": 2,
@@ -29,10 +32,10 @@
     },
     {
       "id": "node_0002",
-      "kind": 13,
+      "kind": 0,
       "cell": [
         4,
-        8
+        6
       ],
       "cap": 1,
       "refractory": 2,
@@ -52,10 +55,10 @@
     },
     {
       "id": "node_0003",
-      "kind": 12,
+      "kind": 1,
       "cell": [
-        4,
-        4
+        5,
+        6
       ],
       "cap": 1,
       "refractory": 2,
@@ -77,8 +80,31 @@
       "id": "node_0004",
       "kind": 3,
       "cell": [
-        8,
-        4
+        4,
+        5
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0005",
+      "kind": 3,
+      "cell": [
+        4,
+        7
       ],
       "cap": 1,
       "refractory": 2,
@@ -100,90 +126,67 @@
   "connections": [
     {
       "from": "node_0001",
-      "to": "node_0003",
-      "from_port": 0,
-      "to_port": 0,
+      "to": "node_0002",
+      "from_port": "south_east",
+      "to_port": "north_west",
       "path": [
         [
-          1,
-          4
-        ],
-        [
-          2,
-          4
-        ],
-        [
           3,
-          4
+          5
         ],
         [
           4,
-          4
+          6
         ]
-      ],
-      "bridge_mode": 0
+      ]
     },
     {
       "from": "node_0002",
       "to": "node_0003",
-      "from_port": 0,
-      "to_port": 0,
+      "from_port": "east",
+      "to_port": "west",
       "path": [
-        [
-          4,
-          8
-        ],
-        [
-          4,
-          7
-        ],
         [
           4,
           6
         ],
         [
-          4,
-          5
-        ],
-        [
-          4,
-          4
+          5,
+          6
         ]
-      ],
-      "bridge_mode": 0
+      ]
     },
     {
       "from": "node_0003",
       "to": "node_0004",
-      "from_port": 0,
-      "to_port": 0,
+      "from_port": "north_east",
+      "to_port": "south_west",
       "path": [
         [
-          4,
-          4
+          5,
+          6
         ],
+        [
+          4,
+          5
+        ]
+      ]
+    },
+    {
+      "from": "node_0003",
+      "to": "node_0005",
+      "from_port": "south_east",
+      "to_port": "north_west",
+      "path": [
         [
           5,
-          4
+          6
         ],
         [
-          6,
-          4
-        ],
-        [
-          7,
-          4
-        ],
-        [
-          8,
-          4
+          4,
+          7
         ]
-      ],
-      "bridge_mode": 0
+      ]
     }
-  ],
-  "allow_reverse_travel": false,
-  "player_blocker_count": 0,
-  "level_title": "Level 006 \u2014 Right of Way",
-  "player_hint": "One-way gates accept pulses only from their marked direction. Choose your Begin."
+  ]
 }

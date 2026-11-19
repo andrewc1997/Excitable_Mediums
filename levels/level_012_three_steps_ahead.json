@@ -1,14 +1,17 @@
 {
   "version": 8,
-  "grid_type": "square",
+  "grid_type": "honeycomb",
   "columns": 12,
   "rows": 12,
+  "allow_reverse_travel": true,
+  "player_blocker_count": 0,
+  "level_title": "Level 012 — Three Steps Ahead",
   "nodes": [
     {
       "id": "node_0001",
       "kind": 13,
       "cell": [
-        1,
+        4,
         5
       ],
       "cap": 1,
@@ -29,9 +32,9 @@
     },
     {
       "id": "node_0002",
-      "kind": 10,
+      "kind": 1,
       "cell": [
-        3,
+        5,
         5
       ],
       "cap": 1,
@@ -43,7 +46,7 @@
       "channel": 0,
       "delay_ticks": 3,
       "repeat_count": 3,
-      "repeat_interval": 3,
+      "repeat_interval": 2,
       "one_way_direction": 1,
       "alternating_first_branch": 0,
       "player_editable": false,
@@ -52,10 +55,56 @@
     },
     {
       "id": "node_0003",
-      "kind": 7,
+      "kind": 2,
       "cell": [
         6,
-        5
+        4
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": true,
+      "port_rotation_steps": 1,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0004",
+      "kind": 2,
+      "cell": [
+        6,
+        6
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": true,
+      "port_rotation_steps": 1,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0005",
+      "kind": 3,
+      "cell": [
+        7,
+        4
       ],
       "cap": 1,
       "refractory": 2,
@@ -74,13 +123,13 @@
       "wormhole_pair": ""
     },
     {
-      "id": "node_0004",
+      "id": "node_0006",
       "kind": 3,
       "cell": [
-        9,
-        5
+        7,
+        6
       ],
-      "cap": 2,
+      "cap": 1,
       "refractory": 2,
       "inputs": 1,
       "outputs": 2,
@@ -97,11 +146,34 @@
       "wormhole_pair": ""
     },
     {
-      "id": "node_0005",
-      "kind": 13,
+      "id": "node_0007",
+      "kind": 0,
       "cell": [
-        6,
-        8
+        5,
+        3
+      ],
+      "cap": 1,
+      "refractory": 2,
+      "inputs": 1,
+      "outputs": 2,
+      "blocker_hits": 2,
+      "gate_passes": 2,
+      "channel": 0,
+      "delay_ticks": 3,
+      "repeat_count": 3,
+      "repeat_interval": 2,
+      "one_way_direction": 1,
+      "alternating_first_branch": 0,
+      "player_editable": false,
+      "port_rotation_steps": 0,
+      "wormhole_pair": ""
+    },
+    {
+      "id": "node_0008",
+      "kind": 0,
+      "cell": [
+        5,
+        7
       ],
       "cap": 1,
       "refractory": 2,
@@ -124,34 +196,9 @@
     {
       "from": "node_0001",
       "to": "node_0002",
-      "from_port": 0,
-      "to_port": 0,
+      "from_port": "east",
+      "to_port": "west",
       "path": [
-        [
-          1,
-          5
-        ],
-        [
-          2,
-          5
-        ],
-        [
-          3,
-          5
-        ]
-      ],
-      "bridge_mode": 0
-    },
-    {
-      "from": "node_0002",
-      "to": "node_0003",
-      "from_port": 0,
-      "to_port": 0,
-      "path": [
-        [
-          3,
-          5
-        ],
         [
           4,
           5
@@ -159,67 +206,104 @@
         [
           5,
           5
+        ]
+      ]
+    },
+    {
+      "from": "node_0002",
+      "to": "node_0003",
+      "from_port": "north_east",
+      "to_port": "south_west",
+      "path": [
+        [
+          5,
+          5
         ],
         [
           6,
-          5
+          4
         ]
-      ],
-      "bridge_mode": 0
+      ]
+    },
+    {
+      "from": "node_0002",
+      "to": "node_0004",
+      "from_port": "south_east",
+      "to_port": "north_west",
+      "path": [
+        [
+          5,
+          5
+        ],
+        [
+          6,
+          6
+        ]
+      ]
     },
     {
       "from": "node_0003",
-      "to": "node_0004",
-      "from_port": 0,
-      "to_port": 0,
+      "to": "node_0005",
+      "from_port": "east",
+      "to_port": "west",
       "path": [
         [
           6,
-          5
+          4
         ],
         [
           7,
-          5
-        ],
-        [
-          8,
-          5
-        ],
-        [
-          9,
-          5
+          4
         ]
-      ],
-      "bridge_mode": 0
+      ]
     },
     {
-      "from": "node_0005",
-      "to": "node_0003",
-      "from_port": 0,
-      "to_port": 0,
+      "from": "node_0003",
+      "to": "node_0007",
+      "from_port": "north_west",
+      "to_port": "south_east",
       "path": [
         [
           6,
-          8
+          4
         ],
         [
-          6,
-          7
-        ],
+          5,
+          3
+        ]
+      ]
+    },
+    {
+      "from": "node_0004",
+      "to": "node_0006",
+      "from_port": "east",
+      "to_port": "west",
+      "path": [
         [
           6,
           6
         ],
         [
-          6,
-          5
+          7,
+          6
         ]
-      ],
-      "bridge_mode": 0
+      ]
+    },
+    {
+      "from": "node_0004",
+      "to": "node_0008",
+      "from_port": "south_west",
+      "to_port": "north_east",
+      "path": [
+        [
+          6,
+          6
+        ],
+        [
+          5,
+          7
+        ]
+      ]
     }
-  ],
-  "allow_reverse_travel": false,
-  "player_blocker_count": 0,
-  "level_title": "Level 008 \u2014 Two Is Enough",
-  "player_hint": "Choose the Begin whose Repeater fills a two-hit target through an Amount Gate."
+  ]
 }
